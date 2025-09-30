@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
-import '../services/api_client.dart';
-import 'dart:convert';
 import '../services/currency.dart';
 import 'product_form_screen.dart';
+import '../repositories/products_repository.dart';
+import '../services/local_db.dart';
+import '../services/sync_service.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({super.key});
@@ -15,10 +16,13 @@ class ProductsScreen extends StatefulWidget {
 class _ProductsScreenState extends State<ProductsScreen> {
   List<Product> _products = [];
   bool _isLoading = true;
+  final _repo = ProductsRepository();
 
   @override
   void initState() {
     super.initState();
+    LocalDb.instance();
+    SyncService().start();
     _loadProducts();
   }
 
@@ -27,33 +31,33 @@ class _ProductsScreenState extends State<ProductsScreen> {
       _isLoading = true;
     });
 
-    final resp = await ApiClient.get('/products', auth: true);
-    if (resp.statusCode == 200) {
-      final list = (jsonDecode(resp.body) as List)
-          .map(
-            (m) => Product(
-              id: m['id'],
-              name: m['name'],
-              price: (m['price'] as num).toDouble(),
-              stockQuantity: (m['stock'] as num).toInt(),
-              createdAt:
-                  DateTime.tryParse(m['created_at']?.toString() ?? '') ??
-                  DateTime.now(),
-              updatedAt:
-                  DateTime.tryParse(m['created_at']?.toString() ?? '') ??
-                  DateTime.now(),
+    // Tenta sincronizar do backend primeiro, se possível
+    try {
+      await _repo.syncFromRemote();
+    } catch (_) {}
+
+    final rows = await _repo.getAllLocal();
+    final list = rows
+        .map(
+          (m) => Product(
+            id: m['id'] as int?,
+            name: m['name'] as String,
+            price: (m['price'] as num).toDouble(),
+            stockQuantity: (m['stock'] as num).toInt(),
+            createdAt: DateTime.fromMillisecondsSinceEpoch(
+              (m['updated_at'] as num).toInt(),
             ),
-          )
-          .toList();
-      setState(() {
-        _products = list;
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+            updatedAt: DateTime.fromMillisecondsSinceEpoch(
+              (m['updated_at'] as num).toInt(),
+            ),
+          ),
+        )
+        .toList();
+    if (!mounted) return;
+    setState(() {
+      _products = list;
+      _isLoading = false;
+    });
   }
 
   @override
@@ -64,6 +68,29 @@ class _ProductsScreenState extends State<ProductsScreen> {
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         actions: [
+          ValueListenableBuilder<bool>(
+            valueListenable: SyncService.syncing,
+            builder: (context, syncing, _) {
+              return syncing
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink();
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _isLoading ? null : _loadProducts,
+            tooltip: 'Atualizar',
+          ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
@@ -176,10 +203,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
 
     if (result != null && result is Product) {
-      final newProduct = await LocalStorageService.addProduct(result);
-      setState(() {
-        _products.add(newProduct);
+      await _repo.queueOp('create', {
+        'name': result.name,
+        'price': result.price,
+        'stock': result.stockQuantity,
       });
+      await _repo.upsertLocal({
+        'id': result.id,
+        'name': result.name,
+        'price': result.price,
+        'stock': result.stockQuantity,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      });
+      await _loadProducts();
+      SyncService().sync();
     }
   }
 
@@ -191,14 +228,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
       ),
     );
 
-    if (result != null && result is Product) {
-      await LocalStorageService.updateProduct(result);
-      setState(() {
-        final index = _products.indexWhere((p) => p.id == product.id);
-        if (index != -1) {
-          _products[index] = result;
-        }
+    if (result != null && result is Product && product.id != null) {
+      await _repo.queueOp('update', {
+        'id': product.id,
+        'name': result.name,
+        'price': result.price,
+        'stock': result.stockQuantity,
       });
+      await _repo.upsertLocal({
+        'id': product.id,
+        'name': result.name,
+        'price': result.price,
+        'stock': result.stockQuantity,
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      });
+      await _loadProducts();
+      SyncService().sync();
     }
   }
 
@@ -217,10 +262,17 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ),
           TextButton(
             onPressed: () async {
-              await LocalStorageService.deleteProduct(product.id!);
-              setState(() {
-                _products.removeWhere((p) => p.id == product.id);
-              });
+              if (product.id != null) {
+                await _repo.queueOp('delete', {'id': product.id});
+                final db = await LocalDb.instance();
+                await db.delete(
+                  'products',
+                  where: 'id = ?',
+                  whereArgs: [product.id],
+                );
+                await _loadProducts();
+                SyncService().sync();
+              }
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(

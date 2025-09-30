@@ -4,15 +4,8 @@ import 'dart:io' show Platform;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiClient {
-  // Resolve base URL per platform (Android emulator uses 10.0.2.2)
-  static String get _baseUrl {
-    try {
-      if (Platform.isAndroid) return 'http://10.0.2.2:3000';
-    } catch (_) {
-      // Web/unsupported Platform, fallback to localhost
-    }
-    return 'http://localhost:3000';
-  }
+  // Backend base URL (Render)
+  static String get _baseUrl => 'https://nova-joct.onrender.com';
 
   static const String _tokenKey = 'auth_token';
 
@@ -67,5 +60,29 @@ class ApiClient {
       if (token != null) headers['Authorization'] = 'Bearer $token';
     }
     return http.patch(uri, headers: headers, body: jsonEncode(body));
+  }
+
+  static Future<http.Response> put(
+    String path,
+    Map<String, dynamic> body, {
+    bool auth = false,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (auth) {
+      final token = await _getToken();
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+    }
+    return http.put(uri, headers: headers, body: jsonEncode(body));
+  }
+
+  static Future<http.Response> delete(String path, {bool auth = false}) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final headers = <String, String>{};
+    if (auth) {
+      final token = await _getToken();
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+    }
+    return http.delete(uri, headers: headers);
   }
 }

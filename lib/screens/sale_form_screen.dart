@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
+import '../repositories/products_repository.dart';
 
 class SaleFormScreen extends StatefulWidget {
   const SaleFormScreen({super.key});
@@ -17,39 +18,45 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   final _unitPriceController = TextEditingController();
   double _totalPrice = 0.0;
 
-  // Lista de produtos de exemplo
-  final List<Product> _products = [
-    Product(
-      id: 1,
-      name: 'Café Expresso',
-      price: 3.50,
-      stockQuantity: 50,
-      createdAt: DateTime.now().subtract(const Duration(days: 5)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Product(
-      id: 2,
-      name: 'Pão de Açúcar',
-      price: 0.80,
-      stockQuantity: 100,
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-      updatedAt: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Product(
-      id: 3,
-      name: 'Leite Integral',
-      price: 4.20,
-      stockQuantity: 30,
-      createdAt: DateTime.now().subtract(const Duration(days: 2)),
-      updatedAt: DateTime.now(),
-    ),
-  ];
+  final _repo = ProductsRepository();
+  List<Product> _products = [];
+  bool _loadingProducts = false;
 
   @override
   void initState() {
     super.initState();
     _quantityController.addListener(_calculateTotal);
     _unitPriceController.addListener(_calculateTotal);
+    _loadProducts();
+  }
+
+  Future<void> _loadProducts() async {
+    setState(() {
+      _loadingProducts = true;
+    });
+    // Tenta sincronizar com backend; se falhar, ignora e usa cache
+    try {
+      await _repo.syncFromRemote();
+    } catch (_) {}
+
+    final rows = await _repo.getAllLocal();
+    final products = rows
+        .map(
+          (m) => Product(
+            id: m['id'] as int?,
+            name: m['name'] as String,
+            price: (m['price'] as num).toDouble(),
+            stockQuantity: (m['stock'] as num).toInt(),
+            createdAt: DateTime.now(),
+            updatedAt: DateTime.now(),
+          ),
+        )
+        .toList();
+    if (!mounted) return;
+    setState(() {
+      _products = products;
+      _loadingProducts = false;
+    });
   }
 
   @override
@@ -74,6 +81,13 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
         title: const Text('Nova Venda'),
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _loadingProducts ? null : _loadProducts,
+            tooltip: 'Atualizar produtos',
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -91,15 +105,16 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     children: [
                       Text(
                         'Dados da Venda',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.green[700],
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green[700],
+                            ),
                       ),
                       const SizedBox(height: 20),
                       // Seletor de produto
                       DropdownButtonFormField<Product>(
-                        initialValue: _selectedProduct,
+                        value: _selectedProduct,
                         decoration: const InputDecoration(
                           labelText: 'Produto',
                           prefixIcon: Icon(Icons.inventory_2),
@@ -115,7 +130,9 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           setState(() {
                             _selectedProduct = newValue;
                             if (newValue != null) {
-                              _unitPriceController.text = newValue.price.toString();
+                              _unitPriceController.text = newValue.price
+                                  .toString();
+                              _calculateTotal();
                             }
                           });
                         },
@@ -126,6 +143,12 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 8),
+                      if (_loadingProducts)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 4),
+                          child: LinearProgressIndicator(minHeight: 2),
+                        ),
                       const SizedBox(height: 16),
                       // Quantidade
                       TextFormField(
@@ -147,7 +170,8 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           if (quantity == null || quantity <= 0) {
                             return 'A quantidade deve ser maior que zero';
                           }
-                          if (_selectedProduct != null && quantity > _selectedProduct!.stockQuantity) {
+                          if (_selectedProduct != null &&
+                              quantity > _selectedProduct!.stockQuantity) {
                             return 'Quantidade maior que o estoque disponível (${_selectedProduct!.stockQuantity})';
                           }
                           return null;
@@ -158,13 +182,17 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       TextFormField(
                         controller: _unitPriceController,
                         decoration: const InputDecoration(
-                          labelText: 'Preço Unitário (R\$)',
+                          labelText: 'Preço Unitário (FCFA)',
                           prefixIcon: Icon(Icons.attach_money),
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -205,16 +233,16 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                         children: [
                           Text(
                             'Total:',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            'R\$ ${_totalPrice.toStringAsFixed(2)}',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
-                            ),
+                            '${_totalPrice.toStringAsFixed(2)} FCFA',
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[700],
+                                ),
                           ),
                         ],
                       ),
@@ -262,11 +290,11 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
         createdAt: DateTime.now(),
       );
 
-      // Aqui você salvaria a venda no banco de dados
-      // Por enquanto, apenas mostra uma mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Venda registrada com sucesso! Total: R\$ ${totalPrice.toStringAsFixed(2)}'),
+          content: Text(
+            'Venda registrada com sucesso! Total: ${totalPrice.toStringAsFixed(2)} FCFA',
+          ),
           backgroundColor: Colors.green[600],
         ),
       );

@@ -59,10 +59,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                     children: [
                       Text(
                         'Informações do Produto',
-                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blue[700],
-                        ),
+                        style: Theme.of(context).textTheme.headlineSmall
+                            ?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue[700],
+                            ),
                       ),
                       const SizedBox(height: 20),
                       TextFormField(
@@ -83,13 +84,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                       TextFormField(
                         controller: _priceController,
                         decoration: const InputDecoration(
-                          labelText: 'Preço (R\$)',
+                          labelText: 'Preço (FCFA)',
                           prefixIcon: Icon(Icons.attach_money),
                           border: OutlineInputBorder(),
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: [
-                          FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d{0,2}')),
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
                         ],
                         validator: (value) {
                           if (value == null || value.isEmpty) {
@@ -145,8 +150,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   ),
                 ),
                 child: Text(
-                  widget.product == null ? 'Cadastrar Produto' : 'Atualizar Produto',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  widget.product == null
+                      ? 'Cadastrar Produto'
+                      : 'Atualizar Produto',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -167,13 +177,13 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         updatedAt: DateTime.now(),
       );
 
-      // Aqui você salvaria o produto no banco de dados
-      // Por enquanto, apenas mostra uma mensagem de sucesso
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(widget.product == null 
-            ? 'Produto cadastrado com sucesso!' 
-            : 'Produto atualizado com sucesso!'),
+          content: Text(
+            widget.product == null
+                ? 'Produto cadastrado com sucesso!'
+                : 'Produto atualizado com sucesso!',
+          ),
           backgroundColor: Colors.green[600],
         ),
       );

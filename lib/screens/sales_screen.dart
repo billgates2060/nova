@@ -4,6 +4,7 @@ import '../services/api_client.dart';
 import 'dart:convert';
 import '../services/currency.dart';
 import 'sale_form_screen.dart';
+import '../services/sync_service.dart';
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
@@ -23,11 +24,13 @@ class _SalesScreenState extends State<SalesScreen> {
   }
 
   Future<void> _loadSales() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
     });
 
     final resp = await ApiClient.get('/sales', auth: true);
+    if (!mounted) return;
     if (resp.statusCode == 200) {
       final list = (jsonDecode(resp.body) as List)
           .map(
@@ -43,11 +46,13 @@ class _SalesScreenState extends State<SalesScreen> {
             ),
           )
           .toList();
+      if (!mounted) return;
       setState(() {
         _sales = list;
         _isLoading = false;
       });
     } else {
+      if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
@@ -76,6 +81,24 @@ class _SalesScreenState extends State<SalesScreen> {
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
         actions: [
+          ValueListenableBuilder<bool>(
+            valueListenable: SyncService.syncing,
+            builder: (context, syncing, _) {
+              return syncing
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
@@ -221,8 +244,8 @@ class _SalesScreenState extends State<SalesScreen> {
       MaterialPageRoute(builder: (context) => const SaleFormScreen()),
     );
 
+    if (!mounted) return;
     if (result != null && result is Sale) {
-      // Enviar venda para backend
       await ApiClient.post('/sales', {
         'product_id': result.productId,
         'product_name': result.productName,

@@ -5,6 +5,7 @@ import '../models/daily_summary.dart';
 import '../services/api_client.dart';
 import 'dart:convert';
 import '../services/currency.dart';
+import '../services/sync_service.dart';
 
 class DailySummaryScreen extends StatefulWidget {
   const DailySummaryScreen({super.key});
@@ -25,6 +26,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
   Future<void> _loadSales() async {
     final resp = await ApiClient.get('/sales', auth: true);
+    if (!mounted) return;
     if (resp.statusCode == 200) {
       final list = (jsonDecode(resp.body) as List)
           .map(
@@ -57,6 +59,24 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
         backgroundColor: Colors.purple[600],
         foregroundColor: Colors.white,
         actions: [
+          ValueListenableBuilder<bool>(
+            valueListenable: SyncService.syncing,
+            builder: (context, syncing, _) {
+              return syncing
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 12),
+                      child: SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.calendar_today),
             onPressed: _selectDate,
