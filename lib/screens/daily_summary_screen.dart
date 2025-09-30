@@ -1,0 +1,292 @@
+import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import '../models/sale.dart';
+import '../models/daily_summary.dart';
+import '../services/local_storage_service.dart';
+
+class DailySummaryScreen extends StatefulWidget {
+  const DailySummaryScreen({super.key});
+
+  @override
+  State<DailySummaryScreen> createState() => _DailySummaryScreenState();
+}
+
+class _DailySummaryScreenState extends State<DailySummaryScreen> {
+  DateTime _selectedDate = DateTime.now();
+  List<Sale> _sales = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSales();
+  }
+
+  Future<void> _loadSales() async {
+    final sales = await LocalStorageService.loadSales();
+    setState(() {
+      _sales = sales;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final dailySummary = DailySummary.fromSales(_sales, _selectedDate);
+    final isToday = _isToday(_selectedDate);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Resumo Diário'),
+        backgroundColor: Colors.purple[600],
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.calendar_today),
+            onPressed: _selectDate,
+          ),
+        ],
+      ),
+      body: Column(
+        children: [
+          // Seletor de data
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.purple[50],
+              border: Border(
+                bottom: BorderSide(color: Colors.grey[300]!),
+              ),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isToday ? 'Hoje' : 'Data Selecionada',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.purple[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      DateFormat('dd/MM/yyyy').format(_selectedDate),
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: Colors.purple[700],
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                IconButton(
+                  onPressed: _selectDate,
+                  icon: Icon(
+                    Icons.calendar_month,
+                    color: Colors.purple[700],
+                    size: 32,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Resumo do dia
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Colors.purple[600]!, Colors.purple[400]!],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.purple.withOpacity(0.3),
+                  blurRadius: 10,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              children: [
+                Text(
+                  'Resumo do Dia',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    _buildSummaryCard(
+                      'Total Vendido',
+                      'R\$ ${dailySummary.totalSales.toStringAsFixed(2)}',
+                      Icons.attach_money,
+                    ),
+                    _buildSummaryCard(
+                      'Produtos Vendidos',
+                      '${dailySummary.totalProductsSold}',
+                      Icons.shopping_cart,
+                    ),
+                    _buildSummaryCard(
+                      'Vendas',
+                      '${dailySummary.sales.length}',
+                      Icons.receipt,
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Lista de vendas do dia
+          Expanded(
+            child: dailySummary.sales.isEmpty
+                ? _buildEmptyState()
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: dailySummary.sales.length,
+                    itemBuilder: (context, index) {
+                      final sale = dailySummary.sales[index];
+                      return Card(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        elevation: 2,
+                        child: ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: Colors.purple[100],
+                            child: Icon(
+                              Icons.shopping_cart,
+                              color: Colors.purple[700],
+                            ),
+                          ),
+                          title: Text(
+                            sale.productName,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(
+                            '${sale.quantity} x R\$ ${sale.unitPrice.toStringAsFixed(2)}',
+                          ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                'R\$ ${sale.totalPrice.toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              Text(
+                                '${sale.saleDate.hour.toString().padLeft(2, '0')}:${sale.saleDate.minute.toString().padLeft(2, '0')}',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSummaryCard(String title, String value, IconData icon) {
+    return Column(
+      children: [
+        Icon(
+          icon,
+          color: Colors.white,
+          size: 32,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          title,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: Colors.white.withOpacity(0.9),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'Nenhuma venda registrada',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+              color: Colors.grey[600],
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Não há vendas para a data selecionada',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Colors.grey[500],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  bool _isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year &&
+        date.month == now.month &&
+        date.day == now.day;
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: Colors.purple[600]!,
+              onPrimary: Colors.white,
+              surface: Colors.white,
+              onSurface: Colors.black,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
+  }
+}
