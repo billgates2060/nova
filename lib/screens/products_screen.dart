@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/product.dart';
-import '../services/local_storage_service.dart';
+import '../services/api_client.dart';
+import 'dart:convert';
+import '../services/currency.dart';
 import 'product_form_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -24,12 +26,34 @@ class _ProductsScreenState extends State<ProductsScreen> {
     setState(() {
       _isLoading = true;
     });
-    
-    final products = await LocalStorageService.loadProducts();
-    setState(() {
-      _products = products;
-      _isLoading = false;
-    });
+
+    final resp = await ApiClient.get('/products', auth: true);
+    if (resp.statusCode == 200) {
+      final list = (jsonDecode(resp.body) as List)
+          .map(
+            (m) => Product(
+              id: m['id'],
+              name: m['name'],
+              price: (m['price'] as num).toDouble(),
+              stockQuantity: (m['stock'] as num).toInt(),
+              createdAt:
+                  DateTime.tryParse(m['created_at']?.toString() ?? '') ??
+                  DateTime.now(),
+              updatedAt:
+                  DateTime.tryParse(m['created_at']?.toString() ?? '') ??
+                  DateTime.now(),
+            ),
+          )
+          .toList();
+      setState(() {
+        _products = list;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -51,8 +75,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
+          ? _buildEmptyState()
+          : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _products.length,
               itemBuilder: (context, index) {
@@ -63,10 +87,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                   child: ListTile(
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue[100],
-                      child: Icon(
-                        Icons.inventory_2,
-                        color: Colors.blue[700],
-                      ),
+                      child: Icon(Icons.inventory_2, color: Colors.blue[700]),
                     ),
                     title: Text(
                       product.name,
@@ -75,7 +96,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Preço: R\$ ${product.price.toStringAsFixed(2)}'),
+                        Text('Preço: ${Currency.fcfa(product.price)}'),
                         Text('Estoque: ${product.stockQuantity} unidades'),
                       ],
                     ),
@@ -128,24 +149,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.inventory_2_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Nenhum produto cadastrado',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Toque no + para adicionar seu primeiro produto',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[500],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           ),
         ],
       ),
@@ -155,9 +172,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   void _addProduct() async {
     final result = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (context) => const ProductFormScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const ProductFormScreen()),
     );
 
     if (result != null && result is Product) {
@@ -192,7 +207,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Confirmar Exclusão'),
-        content: Text('Tem certeza que deseja excluir o produto "${product.name}"?'),
+        content: Text(
+          'Tem certeza que deseja excluir o produto "${product.name}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),

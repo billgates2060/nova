@@ -13,6 +13,7 @@ class ApiClient {
     }
     return 'http://localhost:3000';
   }
+
   static const String _tokenKey = 'auth_token';
 
   static Future<String?> _getToken() async {
@@ -52,5 +53,19 @@ class ApiClient {
       if (token != null) headers['Authorization'] = 'Bearer $token';
     }
     return http.get(uri, headers: headers);
+  }
+
+  static Future<http.Response> patch(
+    String path,
+    Map<String, dynamic> body, {
+    bool auth = false,
+  }) async {
+    final uri = Uri.parse('$_baseUrl$path');
+    final headers = <String, String>{'Content-Type': 'application/json'};
+    if (auth) {
+      final token = await _getToken();
+      if (token != null) headers['Authorization'] = 'Bearer $token';
+    }
+    return http.patch(uri, headers: headers, body: jsonEncode(body));
   }
 }

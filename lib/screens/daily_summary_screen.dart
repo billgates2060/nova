@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/sale.dart';
 import '../models/daily_summary.dart';
-import '../services/local_storage_service.dart';
+import '../services/api_client.dart';
+import 'dart:convert';
+import '../services/currency.dart';
 
 class DailySummaryScreen extends StatefulWidget {
   const DailySummaryScreen({super.key});
@@ -22,10 +24,26 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   }
 
   Future<void> _loadSales() async {
-    final sales = await LocalStorageService.loadSales();
-    setState(() {
-      _sales = sales;
-    });
+    final resp = await ApiClient.get('/sales', auth: true);
+    if (resp.statusCode == 200) {
+      final list = (jsonDecode(resp.body) as List)
+          .map(
+            (m) => Sale(
+              id: m['id'],
+              productId: m['product_id'],
+              productName: m['product_name'],
+              quantity: (m['quantity'] as num).toInt(),
+              unitPrice: (m['unit_price'] as num).toDouble(),
+              totalPrice: (m['total_price'] as num).toDouble(),
+              saleDate: DateTime.parse(m['sale_date']),
+              createdAt: DateTime.parse(m['created_at']),
+            ),
+          )
+          .toList();
+      setState(() {
+        _sales = list;
+      });
+    }
   }
 
   @override
@@ -53,9 +71,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: Colors.purple[50],
-              border: Border(
-                bottom: BorderSide(color: Colors.grey[300]!),
-              ),
+              border: Border(bottom: BorderSide(color: Colors.grey[300]!)),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -72,10 +88,11 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     ),
                     Text(
                       DateFormat('dd/MM/yyyy').format(_selectedDate),
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        color: Colors.purple[700],
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            color: Colors.purple[700],
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ],
                 ),
@@ -125,7 +142,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   children: [
                     _buildSummaryCard(
                       'Total Vendido',
-                      'R\$ ${dailySummary.totalSales.toStringAsFixed(2)}',
+                      Currency.fcfa(dailySummary.totalSales),
                       Icons.attach_money,
                     ),
                     _buildSummaryCard(
@@ -168,14 +185,14 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
-                            '${sale.quantity} x R\$ ${sale.unitPrice.toStringAsFixed(2)}',
+                            '${sale.quantity} x ${Currency.fcfa(sale.unitPrice)}',
                           ),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
                               Text(
-                                'R\$ ${sale.totalPrice.toStringAsFixed(2)}',
+                                Currency.fcfa(sale.totalPrice),
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   color: Colors.green,
@@ -203,11 +220,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
   Widget _buildSummaryCard(String title, String value, IconData icon) {
     return Column(
       children: [
-        Icon(
-          icon,
-          color: Colors.white,
-          size: 32,
-        ),
+        Icon(icon, color: Colors.white, size: 32),
         const SizedBox(height: 8),
         Text(
           value,
@@ -218,9 +231,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
         ),
         Text(
           title,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: Colors.white.withOpacity(0.9),
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: Colors.white.withOpacity(0.9)),
         ),
       ],
     );
@@ -231,24 +244,20 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Nenhuma venda registrada',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'Não há vendas para a data selecionada',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[500],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           ),
         ],
       ),

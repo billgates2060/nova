@@ -72,7 +72,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Future<void> _toggleBlock(int id, bool block) async {
     final path = block ? '/users/$id/block' : '/users/$id/unblock';
-    final resp = await ApiClient.post(path, {}, auth: true);
+    final resp = await ApiClient.patch(path, {}, auth: true);
     if (resp.statusCode == 200) {
       await _loadAll();
     } else {
@@ -93,7 +93,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             onPressed: () async {
               await AuthService.logout();
               if (!mounted) return;
-              Navigator.of(context).pop();
+              Navigator.of(
+                context,
+              ).pushNamedAndRemoveUntil('/', (route) => false);
             },
             icon: const Icon(Icons.logout),
           ),

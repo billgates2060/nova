@@ -169,6 +169,34 @@ app.post('/products', auth, async (req, res) => {
   }
 });
 
+// Update product
+app.put('/products/:id', auth, async (req, res) => {
+  try {
+    const { name, price, stock } = req.body;
+    const db = await dbPromise;
+    await db.run(
+      'UPDATE products SET name = ?, price = ?, stock = ? WHERE id = ? AND (account_id = ? OR account_id IS NULL)',
+      [name, price, stock ?? 0, req.params.id, req.user.id]
+    );
+    const updated = await db.get('SELECT * FROM products WHERE id = ?', [req.params.id]);
+    if (!updated) return res.status(404).json({ error: 'not_found' });
+    res.json(updated);
+  } catch (e) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Delete product
+app.delete('/products/:id', auth, async (req, res) => {
+  try {
+    const db = await dbPromise;
+    await db.run('DELETE FROM products WHERE id = ? AND (account_id = ? OR account_id IS NULL)', [req.params.id, req.user.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
 // Sales
 app.get('/sales', auth, async (req, res) => {
   const db = await dbPromise;
