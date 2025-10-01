@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:nova/l10n/app_localizations.dart';
 import '../services/api_client.dart';
+import '../services/auth_service.dart';
 
 class ClientsScreen extends StatefulWidget {
   const ClientsScreen({super.key});
@@ -159,11 +160,20 @@ class _ClientsScreenState extends State<ClientsScreen> {
       ),
     );
     if (ok == true) {
-      final resp = await ApiClient.post('/clients', {
+      final user = await AuthService.getCurrentUser();
+      final storeId = user != null ? (user['storeId'] ?? '') : '';
+      final body = {
         'name': nameCtrl.text.trim(),
         'phone': phoneCtrl.text.trim(),
-      }, auth: true);
+        if (storeId.isNotEmpty) 'storeId': storeId,
+      };
+      final resp = await ApiClient.post('/clients', body, auth: true);
       if (resp.statusCode == 201) await _load();
+      if (resp.statusCode == 400) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Erro: preencha loja (storeId)')),
+        );
+      }
     }
   }
 
