@@ -310,10 +310,12 @@ app.get('/clients', auth, async (req, res) => {
 
 app.post('/clients', auth, async (req, res) => {
   try {
-    const { name, phone } = req.body;
+    const { name, phone, storeId: storeIdBody } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
+    const storeId = req.user?.role === 'admin' ? (storeIdBody || req.user?.storeId) : req.user?.storeId;
+    if (!storeId) return res.status(400).json({ error: 'storeId required' });
     const db = await dbPromise;
-    const result = await db.run('INSERT INTO clients (name, phone, store_id) VALUES (?, ?, ?)', [name, phone ?? null, req.user.storeId]);
+    const result = await db.run('INSERT INTO clients (name, phone, store_id) VALUES (?, ?, ?)', [name, phone ?? null, storeId]);
     const created = await db.get('SELECT * FROM clients WHERE id = ?', [result.lastID]);
     res.status(201).json(created);
   } catch {
