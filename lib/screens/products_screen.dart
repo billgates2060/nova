@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import '../models/product.dart';
 import '../services/currency.dart';
 import 'product_form_screen.dart';
 import '../repositories/products_repository.dart';
 import '../services/local_db.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../services/sync_service.dart';
 
 class ProductsScreen extends StatefulWidget {
@@ -15,14 +17,18 @@ class ProductsScreen extends StatefulWidget {
 
 class _ProductsScreenState extends State<ProductsScreen> {
   List<Product> _products = [];
+  List<Product> _filtered = [];
   bool _isLoading = true;
+  String _query = '';
   final _repo = ProductsRepository();
 
   @override
   void initState() {
     super.initState();
-    LocalDb.instance();
-    SyncService().start();
+    if (!kIsWeb) {
+      LocalDb.instance();
+      SyncService().start();
+    }
     _loadProducts();
   }
 
@@ -56,6 +62,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
     if (!mounted) return;
     setState(() {
       _products = list;
+      _applyFilter();
       _isLoading = false;
     });
   }
@@ -64,7 +71,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Produtos'),
+        title: Text(AppLocalizations.of(context)!.products),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
         actions: [
@@ -94,20 +101,20 @@ class _ProductsScreenState extends State<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
-              // Implementar busca
+              _showSearch();
             },
           ),
         ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _products.isEmpty
+          : _filtered.isEmpty
           ? _buildEmptyState()
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: _products.length,
+              itemCount: _filtered.length,
               itemBuilder: (context, index) {
-                final product = _products[index];
+                final product = _filtered[index];
                 return Card(
                   margin: const EdgeInsets.only(bottom: 12),
                   elevation: 2,
@@ -124,7 +131,31 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text('Preço: ${Currency.fcfa(product.price)}'),
-                        Text('Estoque: ${product.stockQuantity} unidades'),
+                        Row(
+                          children: [
+                            Text('Estoque: ${product.stockQuantity} unidades'),
+                            if (product.stockQuantity <= 3)
+                              Container(
+                                margin: const EdgeInsets.only(left: 8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.red[50],
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'Baixo',
+                                  style: TextStyle(
+                                    color: Colors.red[700],
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
                       ],
                     ),
                     trailing: PopupMenuButton<String>(
@@ -171,6 +202,84 @@ class _ProductsScreenState extends State<ProductsScreen> {
     );
   }
 
+  void _applyFilter() {
+    final q = _query.trim().toLowerCase();
+    if (q.isEmpty) {
+      _filtered = List<Product>.from(_products);
+    } else {
+      _filtered = _products
+          .where((p) => p.name.toLowerCase().contains(q))
+          .toList();
+    }
+  }
+
+  void _showSearch() async {
+    final controller = TextEditingController(text: _query);
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Buscar produtos'),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(
+            labelText: 'Nome ou código',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Buscar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      final q = controller.text.trim();
+      if (q.isEmpty) {
+        setState(() {
+          _query = '';
+          _applyFilter();
+        });
+        return;
+      }
+      // Tenta remoto; fallback local
+      try {
+        final results = await _repo.searchRemote(q);
+        if (results.isNotEmpty) {
+          final list = results
+              .map(
+                (m) => Product(
+                  id: m['id'] as int?,
+                  name: m['name'] as String,
+                  price: (m['price'] as num).toDouble(),
+                  stockQuantity: (m['stock'] as num).toInt(),
+                  createdAt: DateTime.now(),
+                  updatedAt: DateTime.now(),
+                ),
+              )
+              .toList();
+          if (!mounted) return;
+          setState(() {
+            _query = q;
+            _filtered = list;
+            _isLoading = false;
+          });
+          return;
+        }
+      } catch (_) {}
+      if (!mounted) return;
+      setState(() {
+        _query = q;
+        _applyFilter();
+      });
+    }
+  }
+
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -205,8 +314,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
     if (result != null && result is Product) {
       await _repo.queueOp('create', {
         'name': result.name,
+        'sku': result.sku,
+        'cost': result.cost,
         'price': result.price,
         'stock': result.stockQuantity,
+        'low_stock_threshold': result.lowStockThreshold ?? 0,
       });
       await _repo.upsertLocal({
         'id': result.id,
@@ -232,8 +344,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
       await _repo.queueOp('update', {
         'id': product.id,
         'name': result.name,
+        'sku': result.sku,
+        'cost': result.cost,
         'price': result.price,
         'stock': result.stockQuantity,
+        'low_stock_threshold': result.lowStockThreshold ?? 0,
       });
       await _repo.upsertLocal({
         'id': product.id,

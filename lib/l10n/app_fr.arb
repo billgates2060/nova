@@ -1,0 +1,21 @@
+{
+  "appTitle": "NOVA - Gestion des Ventes",
+  "login": "Connexion",
+  "email": "E-mail",
+  "password": "Mot de passe",
+  "products": "Produits",
+  "sales": "Ventes",
+  "clients": "Clients",
+  "reports": "Rapports",
+  "admin": "Admin",
+  "lowStock": "Stock faible",
+  "newSale": "Nouvelle Vente",
+  "newProduct": "Nouveau Produit",
+  "settings": "Paramètres",
+  "logout": "Déconnexion",
+  "home": "Accueil",
+  "dailySummary": "Résumé Quotidien",
+  "adminManagement": "Gestion des Comptes (Admin)",
+  "notifications": "Notifications"
+}
+

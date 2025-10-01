@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/sale.dart';
 import '../services/api_client.dart';
+import 'package:nova/l10n/app_localizations.dart';
+import 'package:printing/printing.dart';
+import '../services/reports/receipt_pdf.dart';
 import 'dart:convert';
 import '../services/currency.dart';
 import 'sale_form_screen.dart';
@@ -77,7 +80,7 @@ class _SalesScreenState extends State<SalesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Vendas'),
+        title: Text(AppLocalizations.of(context)!.sales),
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
         actions: [
@@ -254,6 +257,27 @@ class _SalesScreenState extends State<SalesScreen> {
         'sale_date': result.saleDate.toIso8601String(),
       }, auth: true);
       await _loadSales();
+      // Gerar e compartilhar recibo (PDF)
+      final items = [
+        {
+          'name': result.productName,
+          'qty': result.quantity,
+          'price': result.unitPrice,
+          'total': result.totalPrice,
+        },
+      ];
+      final pdfBytes = await buildReceiptPdf(
+        storeName: 'NOVA - Loja',
+        date: DateTime.now(),
+        items: items,
+        total: result.totalPrice,
+        paid: result.totalPrice,
+        troco: 0,
+      );
+      await Printing.sharePdf(
+        bytes: pdfBytes,
+        filename: 'recibo_${DateTime.now().millisecondsSinceEpoch}.pdf',
+      );
     }
   }
 }

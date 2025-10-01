@@ -1,15 +1,21 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:sqflite/sqflite.dart';
 import '../services/local_db.dart';
 import '../services/api_client.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ProductsRepository {
   Future<List<Map<String, dynamic>>> getAllLocal() async {
+    if (kIsWeb) {
+      return [];
+    }
     final db = await LocalDb.instance();
     return db.query('products', orderBy: 'updated_at DESC');
   }
 
   Future<void> upsertLocal(Map<String, dynamic> product) async {
+    if (kIsWeb) return;
     final db = await LocalDb.instance();
     await db.insert(
       'products',
@@ -19,6 +25,17 @@ class ProductsRepository {
   }
 
   Future<void> queueOp(String op, Map<String, dynamic> payload) async {
+    if (kIsWeb) {
+      // On web, push immediately to remote to avoid local DB usage
+      if (op == 'create') {
+        await ApiClient.post('/products', payload, auth: true);
+      } else if (op == 'update') {
+        await ApiClient.put('/products/${payload['id']}', payload, auth: true);
+      } else if (op == 'delete') {
+        await ApiClient.delete('/products/${payload['id']}', auth: true);
+      }
+      return;
+    }
     final db = await LocalDb.instance();
     await db.insert('ops_queue', {
       'entity': 'product',
@@ -48,6 +65,7 @@ class ProductsRepository {
   }
 
   Future<void> pushQueue() async {
+    if (kIsWeb) return;
     final db = await LocalDb.instance();
     final ops = await db.query(
       'ops_queue',
@@ -67,5 +85,32 @@ class ProductsRepository {
       }
       await db.delete('ops_queue', where: 'id = ?', whereArgs: [op['id']]);
     }
+  }
+
+  Future<List<Map<String, dynamic>>> searchRemote(String query) async {
+    try {
+      final conn = await Connectivity().checkConnectivity();
+      if (conn == ConnectivityResult.none) return [];
+      final resp = await ApiClient.get(
+        '/products?q=${Uri.encodeQueryComponent(query)}',
+        auth: true,
+      );
+      if (resp.statusCode == 200) {
+        final list = (jsonDecode(resp.body) as List)
+            .cast<Map<String, dynamic>>();
+        return list
+            .map(
+              (p) => {
+                'id': p['id'],
+                'name': p['name'],
+                'price': p['price'],
+                'stock': p['stock'],
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              },
+            )
+            .toList();
+      }
+    } catch (_) {}
+    return [];
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -43,33 +44,89 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configurações')),
+      appBar: AppBar(title: Text(AppLocalizations.of(context)!.settings)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text('Alterar senha', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+          // Acessibilidade: tamanho da fonte
+          const Text(
+            'Acessibilidade',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              _fontScaleChip(context, 1.0, 'Normal'),
+              _fontScaleChip(context, 1.2, 'Grande'),
+              _fontScaleChip(context, 1.4, 'Extra'),
+            ],
+          ),
+          const SizedBox(height: 24),
+          // Contraste alto (tema escuro/claro controlado pelo sistema já ativo)
+          const Text(
+            'Segurança',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          const Text(
+            'Alterar senha',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
           const SizedBox(height: 12),
           TextField(
             controller: _currentController,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Senha atual', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Senha atual',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _newController,
             obscureText: true,
-            decoration: const InputDecoration(labelText: 'Nova senha', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+              labelText: 'Nova senha',
+              border: OutlineInputBorder(),
+            ),
           ),
           const SizedBox(height: 12),
           ElevatedButton.icon(
             onPressed: _changing ? null : _changePassword,
-            icon: _changing ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.lock_reset),
+            icon: _changing
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.lock_reset),
             label: const Text('Salvar nova senha'),
           ),
         ],
       ),
     );
   }
+
+  Widget _fontScaleChip(BuildContext context, double scale, String label) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: MediaQuery.of(context).textScaler == TextScaler.linear(scale),
+      onSelected: (_) {
+        // Aplica escala no nível da rota atual via MediaQuery
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            pageBuilder: (_, __, ___) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(scale)),
+              child: const SettingsScreen(),
+            ),
+            transitionDuration: const Duration(milliseconds: 0),
+          ),
+        );
+      },
+    );
+  }
 }
-
-

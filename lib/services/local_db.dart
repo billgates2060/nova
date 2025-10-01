@@ -1,8 +1,10 @@
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class LocalDb {
   static Database? _db;
@@ -10,14 +12,25 @@ class LocalDb {
   static Future<Database> instance() async {
     if (_db != null) return _db!;
 
-    // Initialize FFI for desktop platforms
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+    // Initialize the appropriate database factory per platform
+    if (kIsWeb) {
+      // Use IndexedDB without a web worker to avoid extra setup
+      databaseFactory = databaseFactoryFfiWebNoWebWorker;
+    } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      // Initialize FFI for desktop platforms
       sqfliteFfiInit();
       databaseFactory = databaseFactoryFfi;
     }
 
-    final dir = await getApplicationDocumentsDirectory();
-    final path = p.join(dir.path, 'nova_offline.db');
+    final String path;
+    if (kIsWeb) {
+      // On web, the name is enough; it will use IndexedDB
+      path = 'nova_offline.db';
+    } else {
+      final dir = await getApplicationDocumentsDirectory();
+      path = p.join(dir.path, 'nova_offline.db');
+    }
+
     _db = await openDatabase(
       path,
       version: 1,

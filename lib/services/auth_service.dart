@@ -7,6 +7,7 @@ class AuthService {
   static const String _userEmailKey = 'user_email';
   static const String _userNameKey = 'user_name';
   static const String _userRoleKey = 'user_role';
+  static const String _storeIdKey = 'store_id';
 
   // Dados de usuários locais (em um app real, isso viria de um banco de dados)
   static final Map<String, Map<String, String>> _users = {
@@ -38,9 +39,13 @@ class AuthService {
       await prefs.setBool(_isLoggedInKey, true);
       final emailStr = user['email'] as String;
       final roleStr = (user['role'] as String?) ?? 'user';
+      final storeIdStr = (user['storeId'] as String?) ?? '';
       await prefs.setString(_userEmailKey, emailStr);
       await prefs.setString(_userNameKey, emailStr.split('@').first);
       await prefs.setString(_userRoleKey, roleStr);
+      if (storeIdStr.isNotEmpty) {
+        await prefs.setString(_storeIdKey, storeIdStr);
+      }
       await ApiClient.saveToken(token);
       return {
         'success': true,
@@ -64,6 +69,7 @@ class AuthService {
     await prefs.remove(_userEmailKey);
     await prefs.remove(_userNameKey);
     await prefs.remove(_userRoleKey);
+    await prefs.remove(_storeIdKey);
     await ApiClient.clearToken();
   }
 
@@ -80,7 +86,8 @@ class AuthService {
     if (isLoggedIn) {
       final email = prefs.getString(_userEmailKey) ?? '';
       final name = prefs.getString(_userNameKey) ?? '';
-      return {'email': email, 'name': name};
+      final storeId = prefs.getString(_storeIdKey) ?? '';
+      return {'email': email, 'name': name, 'storeId': storeId};
     }
     return null;
   }

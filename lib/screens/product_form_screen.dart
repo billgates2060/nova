@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import '../models/product.dart';
 
@@ -14,24 +15,34 @@ class ProductFormScreen extends StatefulWidget {
 class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
+  final _skuController = TextEditingController();
+  final _costController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
+  final _lowStockController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
+      _skuController.text = widget.product!.sku ?? '';
+      _costController.text = (widget.product!.cost ?? 0).toString();
       _priceController.text = widget.product!.price.toString();
       _stockController.text = widget.product!.stockQuantity.toString();
+      _lowStockController.text = (widget.product!.lowStockThreshold ?? 0)
+          .toString();
     }
   }
 
   @override
   void dispose() {
     _nameController.dispose();
+    _skuController.dispose();
+    _costController.dispose();
     _priceController.dispose();
     _stockController.dispose();
+    _lowStockController.dispose();
     super.dispose();
   }
 
@@ -39,7 +50,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product == null ? 'Novo Produto' : 'Editar Produto'),
+        title: Text(
+          widget.product == null
+              ? AppLocalizations.of(context)!.newProduct
+              : AppLocalizations.of(context)!.products,
+        ),
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
       ),
@@ -79,6 +94,32 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           }
                           return null;
                         },
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _skuController,
+                        decoration: const InputDecoration(
+                          labelText: 'Código (SKU manual)',
+                          prefixIcon: Icon(Icons.qr_code_2),
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _costController,
+                        decoration: const InputDecoration(
+                          labelText: 'Custo (FCFA) - opcional',
+                          prefixIcon: Icon(Icons.money_off),
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -134,6 +175,19 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           return null;
                         },
                       ),
+                      const SizedBox(height: 16),
+                      TextFormField(
+                        controller: _lowStockController,
+                        decoration: const InputDecoration(
+                          labelText: 'Alerta de estoque baixo (unidades)',
+                          prefixIcon: Icon(Icons.warning_amber_rounded),
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                      ),
                     ],
                   ),
                 ),
@@ -171,8 +225,17 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
       final product = Product(
         id: widget.product?.id,
         name: _nameController.text.trim(),
+        sku: _skuController.text.trim().isEmpty
+            ? null
+            : _skuController.text.trim(),
+        cost: _costController.text.trim().isEmpty
+            ? null
+            : double.parse(_costController.text),
         price: double.parse(_priceController.text),
         stockQuantity: int.parse(_stockController.text),
+        lowStockThreshold: _lowStockController.text.trim().isEmpty
+            ? null
+            : int.parse(_lowStockController.text),
         createdAt: widget.product?.createdAt ?? DateTime.now(),
         updatedAt: DateTime.now(),
       );

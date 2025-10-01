@@ -1,0 +1,21 @@
+{
+  "appTitle": "NOVA - Gestão de Vendas",
+  "login": "Entrar",
+  "email": "E-mail",
+  "password": "Senha",
+  "products": "Produtos",
+  "sales": "Vendas",
+  "clients": "Clientes",
+  "reports": "Relatórios",
+  "admin": "Admin",
+  "lowStock": "Estoque Baixo",
+  "newSale": "Nova Venda",
+  "newProduct": "Novo Produto",
+  "settings": "Configurações",
+  "logout": "Sair",
+  "home": "Início",
+  "dailySummary": "Resumo Diário",
+  "adminManagement": "Gestão de Contas (Admin)",
+  "notifications": "Notificações"
+}
+

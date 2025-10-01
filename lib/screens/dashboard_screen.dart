@@ -7,6 +7,9 @@ import 'admin_users_screen.dart';
 import '../services/dashboard_service.dart';
 import 'welcome_screen.dart';
 import 'settings_screen.dart';
+import 'clients_screen.dart';
+import '../widgets/app_drawer.dart';
+import 'package:nova/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -23,11 +26,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
     const ProductsScreen(),
     const SalesScreen(),
     const DailySummaryScreen(),
+    const ClientsScreen(),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: const AppDrawer(),
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -50,6 +55,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label: 'Vendas',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Resumo'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.people_alt),
+            label: 'Clientes',
+          ),
         ],
       ),
     );
@@ -82,34 +91,45 @@ class _DashboardHomeState extends State<DashboardHome> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'NOVA',
-          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.2),
+        title: Text(
+          AppLocalizations.of(context)!.appTitle,
+          style: const TextStyle(
+            fontWeight: FontWeight.w800,
+            letterSpacing: 1.2,
+          ),
         ),
         backgroundColor: const Color(0xFF1E40AF),
         foregroundColor: Colors.white,
         centerTitle: true,
         elevation: 0,
         actions: [
-          IconButton(
-            onPressed: () {
-              // Implementar notificações
-            },
-            icon: const Icon(Icons.notifications_outlined),
+          Tooltip(
+            message: AppLocalizations.of(context)!.notifications,
+            child: IconButton(
+              onPressed: () {
+                // Implementar notificações
+              },
+              icon: const Icon(Icons.notifications_outlined),
+            ),
           ),
           FutureBuilder<String?>(
             future: AuthService.getRole(),
             builder: (context, snapshot) {
               final isAdmin = snapshot.data == 'admin';
               if (!isAdmin) return const SizedBox.shrink();
-              return IconButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
-                  );
-                },
-                icon: const Icon(Icons.admin_panel_settings_outlined),
-                tooltip: 'Admin',
+              return Tooltip(
+                message: AppLocalizations.of(context)!.admin,
+                child: IconButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const AdminUsersScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.admin_panel_settings_outlined),
+                  tooltip: 'Admin',
+                ),
               );
             },
           ),
@@ -160,262 +180,280 @@ class _DashboardHomeState extends State<DashboardHome> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Saudação
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(24),
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [
-                          Color(0xFF1E40AF),
-                          Color(0xFF3B82F6),
-                          Color(0xFF60A5FA),
-                        ],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0xFF1E40AF).withOpacity(0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 8),
-                        ),
-                        BoxShadow(
-                          color: Colors.white.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, -4),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  _buildSummaryCard(
-                                    'Vendas hoje',
-                                    '$todaysSalesCount',
-                                    Icons.shopping_cart_rounded,
-                                    const Color(0xFF10B981),
-                                    context,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  _buildSummaryCard(
-                                    'Produtos',
-                                    '$productsCount',
-                                    Icons.inventory_2_rounded,
-                                    const Color(0xFF3B82F6),
-                                    context,
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: _buildSummaryCard(
-                                'Faturamento hoje',
-                                'R\$ ${todaysRevenue.toStringAsFixed(2)}',
-                                Icons.attach_money_rounded,
-                                const Color(0xFF8B5CF6),
-                                context,
-                              ),
-                            ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Saudação
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFF1E40AF),
+                            Color(0xFF3B82F6),
+                            Color(0xFF60A5FA),
                           ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                         ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Estoque Baixo',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildSummaryCard(
-                          'Faturamento hoje',
-                          'R\$ ${todaysRevenue.toStringAsFixed(2)}',
-                          Icons.attach_money_rounded,
-                          const Color(0xFF8B5CF6),
-                          context,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildActionCard(
-                          'Nova Venda',
-                          Icons.add_shopping_cart_rounded,
-                          const Color(0xFF10B981),
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const SalesScreen(),
-                              ),
-                            );
-                          },
-                          context,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildActionCard(
-                          'Novo Produto',
-                          Icons.add_box_rounded,
-                          const Color(0xFF3B82F6),
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const ProductsScreen(),
-                              ),
-                            );
-                          },
-                          context,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildActionCard(
-                          'Ver Relatórios',
-                          Icons.analytics_rounded,
-                          const Color(0xFF8B5CF6),
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const DailySummaryScreen(),
-                              ),
-                            );
-                          },
-                          context,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Vendas Recentes',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.grey.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        if (recent.isEmpty)
-                          const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Text('Sem vendas recentes.'),
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFF1E40AF).withOpacity(0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                        for (final s in recent)
-                          _buildRecentSaleItem(
-                            (s['product_name'] ?? 'Produto').toString(),
-                            '${s['quantity']}x',
-                            'R\$ ${(s['total_price'] as num?)?.toStringAsFixed(2) ?? '0,00'}',
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, -4),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    _buildSummaryCard(
+                                      'Vendas hoje',
+                                      '$todaysSalesCount',
+                                      Icons.shopping_cart_rounded,
+                                      const Color(0xFF10B981),
+                                      context,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    _buildSummaryCard(
+                                      'Produtos',
+                                      '$productsCount',
+                                      Icons.inventory_2_rounded,
+                                      const Color(0xFF3B82F6),
+                                      context,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: _buildSummaryCard(
+                                  'Faturamento hoje',
+                                  'R\$ ${todaysRevenue.toStringAsFixed(2)}',
+                                  Icons.attach_money_rounded,
+                                  const Color(0xFF8B5CF6),
+                                  context,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildSummaryCard(
+                            'Vendas hoje',
+                            '$todaysSalesCount',
+                            Icons.shopping_cart_rounded,
+                            const Color(0xFF10B981),
                             context,
                           ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildSummaryCard(
+                            'Faturamento hoje',
+                            'R\$ ${todaysRevenue.toStringAsFixed(2)}',
+                            Icons.attach_money_rounded,
+                            const Color(0xFF8B5CF6),
+                            context,
+                          ),
+                        ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Ações Rápidas',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey[800],
+                    const SizedBox(height: 24),
+                    // Progresso gamificado (meta simples = 10 vendas)
+                    _DailyGoalProgress(current: todaysSalesCount, goal: 10),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Estoque Baixo',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 700;
-                      final actions = [
-                        _buildActionCard(
-                          'Configurações',
-                          Icons.settings_rounded,
-                          const Color(0xFF6B7280),
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const SettingsScreen(),
-                              ),
-                            );
-                          },
-                          context,
-                        ),
-                        _buildActionCard(
-                          'Ver Relatórios',
-                          Icons.analytics_rounded,
-                          const Color(0xFF8B5CF6),
-                          () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const DailySummaryScreen(),
-                              ),
-                            );
-                          },
-                          context,
-                        ),
-                      ];
-                      if (isWide) {
-                        return Row(
-                          children: [
-                            Expanded(child: actions[0]),
-                            const SizedBox(width: 12),
-                            Expanded(child: actions[1]),
-                          ],
+                    const SizedBox(height: 12),
+                    _LowStockList(
+                      items:
+                          (data['lowStock'] as List<Map<String, dynamic>>? ??
+                          const []),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildActionCard(
+                      'Nova Venda',
+                      Icons.add_shopping_cart_rounded,
+                      const Color(0xFF10B981),
+                      () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const SalesScreen(),
+                          ),
                         );
-                      }
-                      return Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
-                        children: actions
-                            .map(
-                              (w) => SizedBox(
-                                width: (constraints.maxWidth - 12) / 2,
-                                child: w,
-                              ),
-                            )
-                            .toList(),
-                      );
-                    },
-                  ),
-                ],
+                      },
+                      context,
+                    ),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionCard(
+                            'Novo Produto',
+                            Icons.add_box_rounded,
+                            const Color(0xFF3B82F6),
+                            () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const ProductsScreen(),
+                                ),
+                              );
+                            },
+                            context,
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildActionCard(
+                            'Ver Relatórios',
+                            Icons.analytics_rounded,
+                            const Color(0xFF8B5CF6),
+                            () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const DailySummaryScreen(),
+                                ),
+                              );
+                            },
+                            context,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Vendas Recentes',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          if (recent.isEmpty)
+                            const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Text('Sem vendas recentes.'),
+                            ),
+                          for (final s in recent)
+                            _buildRecentSaleItem(
+                              (s['product_name'] ?? 'Produto').toString(),
+                              '${s['quantity']}x',
+                              'R\$ ${(s['total_price'] as num?)?.toStringAsFixed(2) ?? '0,00'}',
+                              context,
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Ações Rápidas',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[800],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    LayoutBuilder(
+                      builder: (context, constraints) {
+                        final isWide = constraints.maxWidth > 700;
+                        final actions = [
+                          _buildActionCard(
+                            'Configurações',
+                            Icons.settings_rounded,
+                            const Color(0xFF6B7280),
+                            () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const SettingsScreen(),
+                                ),
+                              );
+                            },
+                            context,
+                          ),
+                          _buildActionCard(
+                            'Ver Relatórios',
+                            Icons.analytics_rounded,
+                            const Color(0xFF8B5CF6),
+                            () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const DailySummaryScreen(),
+                                ),
+                              );
+                            },
+                            context,
+                          ),
+                        ];
+                        if (isWide) {
+                          return Row(
+                            children: [
+                              Expanded(child: actions[0]),
+                              const SizedBox(width: 12),
+                              Expanded(child: actions[1]),
+                            ],
+                          );
+                        }
+                        return Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: actions
+                              .map(
+                                (w) => SizedBox(
+                                  width: (constraints.maxWidth - 12) / 2,
+                                  child: w,
+                                ),
+                              )
+                              .toList(),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
           );
@@ -595,6 +633,119 @@ class _DashboardHomeState extends State<DashboardHome> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _DailyGoalProgress extends StatelessWidget {
+  final int current;
+  final int goal;
+  const _DailyGoalProgress({required this.current, required this.goal});
+  @override
+  Widget build(BuildContext context) {
+    final double pct = ((current / goal).clamp(0.0, 1.0)) as double;
+    final emoji = pct >= 1 ? '🎉' : (pct >= 0.5 ? '💪' : '🚀');
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Meta diária: $goal vendas',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              Text('$emoji ${((pct) * 100).toStringAsFixed(0)}%'),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: LinearProgressIndicator(
+              minHeight: 10,
+              value: pct.toDouble(),
+              backgroundColor: Colors.grey[200],
+              color: const Color(0xFF10B981),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LowStockList extends StatelessWidget {
+  final List<Map<String, dynamic>> items;
+  const _LowStockList({required this.items});
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.08),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: const Text('Tudo certo! Nenhum item com estoque baixo.'),
+      );
+    }
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.08),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListView.separated(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        itemCount: items.length.clamp(0, 5),
+        separatorBuilder: (_, __) => const Divider(height: 1),
+        itemBuilder: (_, i) {
+          final it = items[i];
+          return ListTile(
+            leading: const Icon(Icons.warning_amber_rounded, color: Colors.red),
+            title: Text(
+              (it['name'] ?? 'Produto').toString(),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            subtitle: Text(
+              'Estoque: ${it['stock']}  •  Alerta: ${it['low_stock_threshold']}',
+            ),
+          );
+        },
       ),
     );
   }

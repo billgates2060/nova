@@ -1,0 +1,21 @@
+{
+  "appTitle": "NOVA - Sales Management",
+  "login": "Login",
+  "email": "Email",
+  "password": "Password",
+  "products": "Products",
+  "sales": "Sales",
+  "clients": "Clients",
+  "reports": "Reports",
+  "admin": "Admin",
+  "lowStock": "Low stock",
+  "newSale": "New Sale",
+  "newProduct": "New Product",
+  "settings": "Settings",
+  "logout": "Logout",
+  "home": "Home",
+  "dailySummary": "Daily Summary",
+  "adminManagement": "Account Management (Admin)",
+  "notifications": "Notifications"
+}
+

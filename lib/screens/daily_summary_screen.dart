@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import '../models/sale.dart';
 import '../models/daily_summary.dart';
 import '../services/api_client.dart';
@@ -55,7 +56,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Resumo Diário'),
+        title: Text(AppLocalizations.of(context)!.dailySummary),
         backgroundColor: Colors.purple[600],
         foregroundColor: Colors.white,
         actions: [

@@ -17,6 +17,9 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   final _quantityController = TextEditingController();
   final _unitPriceController = TextEditingController();
   double _totalPrice = 0.0;
+  double _paid = 0.0;
+  double _discountPercent = 0.0;
+  double _discountFixed = 0.0;
 
   final _repo = ProductsRepository();
   List<Product> _products = [];
@@ -69,8 +72,12 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   void _calculateTotal() {
     final quantity = int.tryParse(_quantityController.text) ?? 0;
     final unitPrice = double.tryParse(_unitPriceController.text) ?? 0.0;
+    var subtotal = quantity * unitPrice;
+    if (_discountPercent > 0) subtotal *= (1 - _discountPercent / 100);
+    if (_discountFixed > 0)
+      subtotal = (subtotal - _discountFixed).clamp(0, double.infinity);
     setState(() {
-      _totalPrice = quantity * unitPrice;
+      _totalPrice = subtotal;
     });
   }
 
@@ -245,6 +252,85 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                                 ),
                           ),
                         ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Desconto (%)',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}'),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                _discountPercent = double.tryParse(v) ?? 0.0;
+                                _calculateTotal();
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextFormField(
+                              decoration: const InputDecoration(
+                                labelText: 'Desconto fixo (FCFA)',
+                                border: OutlineInputBorder(),
+                              ),
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                    decimal: true,
+                                  ),
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'^\d+\.?\d{0,2}'),
+                                ),
+                              ],
+                              onChanged: (v) {
+                                _discountFixed = double.tryParse(v) ?? 0.0;
+                                _calculateTotal();
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        decoration: const InputDecoration(
+                          labelText: 'Pago (Dinheiro/Cartão)',
+                          border: OutlineInputBorder(),
+                        ),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [
+                          FilteringTextInputFormatter.allow(
+                            RegExp(r'^\d+\.?\d{0,2}'),
+                          ),
+                        ],
+                        onChanged: (v) {
+                          setState(() {
+                            _paid = double.tryParse(v) ?? 0.0;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Troco: ${(_paid - _totalPrice).clamp(0, double.infinity).toStringAsFixed(2)} FCFA',
+                          style: TextStyle(
+                            color: Colors.green[700],
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ],
                   ),
