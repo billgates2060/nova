@@ -29,6 +29,7 @@ async function createDb() {
     PRAGMA foreign_keys = ON;
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
       email TEXT UNIQUE NOT NULL,
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
@@ -74,6 +75,7 @@ async function createDb() {
   await safeAlter("ALTER TABLE users ADD COLUMN role TEXT NOT NULL DEFAULT 'user'");
   await safeAlter("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
   await safeAlter('ALTER TABLE users ADD COLUMN store_id TEXT');
+  await safeAlter('ALTER TABLE users ADD COLUMN name TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN sku TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN cost REAL DEFAULT 0');
   await safeAlter('ALTER TABLE products ADD COLUMN low_stock_threshold INTEGER NOT NULL DEFAULT 0');
@@ -86,7 +88,7 @@ async function createDb() {
   const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [ADMIN_EMAIL]);
   if (!existingAdmin) {
     const hash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-    await db.run("INSERT INTO users (email, password, role, status) VALUES (?, ?, 'admin', 'active')", [ADMIN_EMAIL, hash]);
+    await db.run("INSERT INTO users (name, email, password, role, status) VALUES (?, ?, ?, 'admin', 'active')", ['Admin', ADMIN_EMAIL, hash]);
     console.log(`Created default admin: ${ADMIN_EMAIL}`);
   }
   return db;
@@ -136,19 +138,20 @@ function requireAdmin(req, res, next) {
 // Admin user management
 app.get('/users', auth, requireAdmin, async (_req, res) => {
   const db = await dbPromise;
-  const users = await db.all('SELECT id, email, role, status, store_id as storeId, created_at FROM users ORDER BY id DESC');
+  const users = await db.all('SELECT id, name, email, role, status, store_id as storeId, created_at FROM users ORDER BY id DESC');
   res.json(users);
 });
 
 app.post('/users', auth, requireAdmin, async (req, res) => {
   try {
-    const { email, password, role = 'user', storeId } = req.body;
-    if (!email || !password || !storeId) return res.status(400).json({ error: 'email, password, storeId required' });
+    const { name, email, password, role = 'user', store_id, storeId } = req.body;
+    const normalizedStoreId = store_id || storeId;
+    if (!name || !email || !password || !normalizedStoreId) return res.status(400).json({ error: 'name, email, password, storeId required' });
     if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     const db = await dbPromise;
     const hash = await bcrypt.hash(password, 10);
-    const result = await db.run('INSERT INTO users (email, password, role, status, store_id) VALUES (?, ?, ?, "active", ?)', [email, hash, role, storeId]);
-    const created = await db.get('SELECT id, email, role, status, store_id as storeId, created_at FROM users WHERE id = ?', [result.lastID]);
+    const result = await db.run('INSERT INTO users (name, email, password, role, status, store_id) VALUES (?, ?, ?, ?, "active", ?)', [name, email, hash, role, normalizedStoreId]);
+    const created = await db.get('SELECT id, name, email, role, status, store_id as storeId, created_at FROM users WHERE id = ?', [result.lastID]);
     res.status(201).json(created);
   } catch (e) {
     if (String(e).includes('UNIQUE')) return res.status(409).json({ error: 'email_exists' });

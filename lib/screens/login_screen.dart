@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'dashboard_screen.dart';
 import 'admin_users_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -229,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                               const SizedBox(height: 16),
                               TextButton(
-                                onPressed: _showForgotPasswordDialog,
+                                onPressed: _callAdmin,
                                 child: const Text('Esqueceu sua senha?'),
                               ),
                             ],
@@ -248,16 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: Colors.white.withOpacity(0.9)),
                       ),
                       TextButton(
-                        onPressed: () {
-                          // Implementar tela de cadastro
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Funcionalidade em desenvolvimento',
-                              ),
-                            ),
-                          );
-                        },
+                        onPressed: _callAdmin,
                         child: const Text(
                           'Cadastre-se',
                           style: TextStyle(
@@ -327,58 +319,17 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showForgotPasswordDialog() {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Recuperar Senha'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Digite seu email para receber instruções de recuperação:',
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: emailController,
-              decoration: const InputDecoration(
-                labelText: 'Email',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.emailAddress,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () async {
-              if (emailController.text.isNotEmpty) {
-                Navigator.pop(context);
-
-                final result = await AuthService.resetPassword(
-                  emailController.text.trim(),
-                );
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(result['message']),
-                    backgroundColor: result['success']
-                        ? Colors.green[600]
-                        : Colors.red[600],
-                  ),
-                );
-              }
-            },
-            child: const Text('Enviar'),
-          ),
-        ],
-      ),
-    );
+  Future<void> _callAdmin() async {
+    const tel = 'tel:+245956605604';
+    final uri = Uri.parse(tel);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Não foi possível abrir o discador.')),
+        );
+      }
+    }
   }
 }

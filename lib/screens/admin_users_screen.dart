@@ -17,6 +17,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _storeIdController = TextEditingController();
   String _role = 'user';
 
   @override
@@ -41,20 +43,27 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   Future<void> _createUser() async {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
-    if (email.isEmpty || password.length < 6) {
+    final name = _nameController.text.trim();
+    final storeId = _storeIdController.text.trim();
+    if (name.isEmpty || email.isEmpty || password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha email e senha (>= 6)')),
+        const SnackBar(content: Text('Preencha nome, email e senha (>= 6)')),
       );
       return;
     }
-    final resp = await ApiClient.post('/users', {
+    final body = {
+      'name': name,
       'email': email,
       'password': password,
       'role': _role,
-    }, auth: true);
+      if (storeId.isNotEmpty) 'store_id': storeId,
+    };
+    final resp = await ApiClient.post('/users', body, auth: true);
     if (resp.statusCode == 201) {
       _emailController.clear();
       _passwordController.clear();
+      _nameController.clear();
+      _storeIdController.clear();
       setState(() {
         _role = 'user';
       });
@@ -123,8 +132,9 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        child: Wrap(
+          spacing: 16,
+          runSpacing: 12,
           children: [
             _stat('Usuários', '${stats['users']}'),
             _stat('Ativos', '${stats['activeUsers']}'),
@@ -162,6 +172,14 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             ),
             const SizedBox(height: 12),
             TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Nome',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
               controller: _emailController,
               decoration: const InputDecoration(
                 labelText: 'E-mail',
@@ -175,6 +193,15 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               decoration: const InputDecoration(
                 labelText: 'Senha',
                 border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _storeIdController,
+              decoration: const InputDecoration(
+                labelText: 'Store ID (opcional)',
+                border: OutlineInputBorder(),
+                helperText: 'Vincula o usuário a uma loja específica',
               ),
             ),
             const SizedBox(height: 12),
@@ -211,24 +238,56 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         itemBuilder: (context, index) {
           final u = _users[index] as Map<String, dynamic>;
           final blocked = u['status'] == 'blocked';
+          final displayName = (u['name'] as String?)?.trim();
+          final primary = (displayName != null && displayName.isNotEmpty)
+              ? displayName
+              : (u['email'] as String);
+          final initial = primary.substring(0, 1).toUpperCase();
           return ListTile(
             leading: CircleAvatar(
-              child: Text((u['email'] as String).substring(0, 1).toUpperCase()),
+              backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+              foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+              child: Text(initial),
             ),
-            title: Text(u['email'] as String),
-            subtitle: Text('Role: ${u['role']} • Status: ${u['status']}'),
-            trailing: Wrap(
-              spacing: 8,
+            title: Text(
+              primary,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                ElevatedButton(
-                  onPressed: () => _toggleBlock(u['id'] as int, !blocked),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: blocked ? Colors.green : Colors.red,
-                    foregroundColor: Colors.white,
-                  ),
-                  child: Text(blocked ? 'Desbloquear' : 'Bloquear'),
+                Text(u['email'] as String),
+                const SizedBox(height: 4),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    Chip(
+                      label: Text('Role: ${u['role']}'),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    Chip(
+                      label: Text('Status: ${u['status']}'),
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: blocked
+                          ? Colors.red.withOpacity(0.1)
+                          : Colors.green.withOpacity(0.1),
+                      labelStyle: TextStyle(
+                        color: blocked ? Colors.red : Colors.green,
+                      ),
+                    ),
+                  ],
                 ),
               ],
+            ),
+            trailing: ElevatedButton(
+              onPressed: () => _toggleBlock(u['id'] as int, !blocked),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: blocked ? Colors.green : Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text(blocked ? 'Desbloquear' : 'Bloquear'),
             ),
           );
         },
