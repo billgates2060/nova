@@ -57,7 +57,21 @@ class AuthService {
       return {'success': false, 'message': 'Credenciais inválidas'};
     }
     if (resp.statusCode == 403) {
-      return {'success': false, 'message': 'Conta bloqueada'};
+      try {
+        final err = jsonDecode(resp.body) as Map<String, dynamic>;
+        final code = err['error'] as String?;
+        if (code == 'account_blocked_until') {
+          return {
+            'success': false,
+            'message':
+                'Conta bloqueada temporariamente. Contacte o administrador: +245956605604',
+          };
+        }
+      } catch (_) {}
+      return {
+        'success': false,
+        'message': 'Conta bloqueada. Contacte o administrador: +245956605604',
+      };
     }
     return {'success': false, 'message': 'Erro ao fazer login'};
   }

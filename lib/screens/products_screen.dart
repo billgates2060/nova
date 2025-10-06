@@ -315,7 +315,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
       await _repo.queueOp('create', {
         'name': result.name,
         'sku': result.sku,
-        'cost': result.cost,
         'price': result.price,
         'stock': result.stockQuantity,
         'low_stock_threshold': result.lowStockThreshold ?? 0,
@@ -345,7 +344,6 @@ class _ProductsScreenState extends State<ProductsScreen> {
         'id': product.id,
         'name': result.name,
         'sku': result.sku,
-        'cost': result.cost,
         'price': result.price,
         'stock': result.stockQuantity,
         'low_stock_threshold': result.lowStockThreshold ?? 0,

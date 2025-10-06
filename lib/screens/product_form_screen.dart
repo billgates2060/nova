@@ -16,7 +16,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _skuController = TextEditingController();
-  final _costController = TextEditingController();
   final _priceController = TextEditingController();
   final _stockController = TextEditingController();
   final _lowStockController = TextEditingController();
@@ -27,7 +26,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
     if (widget.product != null) {
       _nameController.text = widget.product!.name;
       _skuController.text = widget.product!.sku ?? '';
-      _costController.text = (widget.product!.cost ?? 0).toString();
       _priceController.text = widget.product!.price.toString();
       _stockController.text = widget.product!.stockQuantity.toString();
       _lowStockController.text = (widget.product!.lowStockThreshold ?? 0)
@@ -39,7 +37,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   void dispose() {
     _nameController.dispose();
     _skuController.dispose();
-    _costController.dispose();
     _priceController.dispose();
     _stockController.dispose();
     _lowStockController.dispose();
@@ -103,23 +100,6 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                           prefixIcon: Icon(Icons.qr_code_2),
                           border: OutlineInputBorder(),
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _costController,
-                        decoration: const InputDecoration(
-                          labelText: 'Custo (FCFA) - opcional',
-                          prefixIcon: Icon(Icons.money_off),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+\.?\d{0,2}'),
-                          ),
-                        ],
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -228,9 +208,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         sku: _skuController.text.trim().isEmpty
             ? null
             : _skuController.text.trim(),
-        cost: _costController.text.trim().isEmpty
-            ? null
-            : double.parse(_costController.text),
+        cost: null,
         price: double.parse(_priceController.text),
         stockQuantity: int.parse(_stockController.text),
         lowStockThreshold: _lowStockController.text.trim().isEmpty

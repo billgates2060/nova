@@ -19,6 +19,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final _passwordController = TextEditingController();
   final _nameController = TextEditingController();
   final _storeIdController = TextEditingController();
+  DateTime? _blockedUntil;
   String _role = 'user';
 
   @override
@@ -57,6 +58,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       'password': password,
       'role': _role,
       if (storeId.isNotEmpty) 'store_id': storeId,
+      if (_blockedUntil != null)
+        'blockedUntil': _blockedUntil!.toIso8601String(),
     };
     final resp = await ApiClient.post('/users', body, auth: true);
     if (resp.statusCode == 201) {
@@ -203,6 +206,54 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 border: OutlineInputBorder(),
                 helperText: 'Vincula o usuário a uma loja específica',
               ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: InputDecorator(
+                    decoration: const InputDecoration(
+                      labelText: 'Bloqueado até (opcional)',
+                      border: OutlineInputBorder(),
+                      helperText: 'Defina a data para bloquear até lá',
+                    ),
+                    child: InkWell(
+                      onTap: () async {
+                        final now = DateTime.now();
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: _blockedUntil ?? now,
+                          firstDate: now,
+                          lastDate: DateTime(now.year + 5),
+                        );
+                        if (picked != null) {
+                          setState(() {
+                            _blockedUntil = picked;
+                          });
+                        }
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        child: Text(
+                          _blockedUntil == null
+                              ? 'Selecionar data'
+                              : _blockedUntil!.toString().split(' ').first,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _blockedUntil = null;
+                    });
+                  },
+                  icon: const Icon(Icons.clear),
+                  tooltip: 'Limpar',
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             DropdownButton<String>(

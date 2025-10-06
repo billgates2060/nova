@@ -34,6 +34,7 @@ async function createDb() {
       password TEXT NOT NULL,
       role TEXT NOT NULL DEFAULT 'user',
       status TEXT NOT NULL DEFAULT 'active',
+      blocked_until TEXT,
       store_id TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
@@ -76,6 +77,7 @@ async function createDb() {
   await safeAlter("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'active'");
   await safeAlter('ALTER TABLE users ADD COLUMN store_id TEXT');
   await safeAlter('ALTER TABLE users ADD COLUMN name TEXT');
+  await safeAlter('ALTER TABLE users ADD COLUMN blocked_until TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN sku TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN cost REAL DEFAULT 0');
   await safeAlter('ALTER TABLE products ADD COLUMN low_stock_threshold INTEGER NOT NULL DEFAULT 0');
@@ -105,9 +107,16 @@ app.post('/auth/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'email and password required' });
     const db = await dbPromise;
-    const user = await db.get('SELECT id, email, password, role, status, store_id FROM users WHERE email = ?', [email]);
+    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id FROM users WHERE email = ?', [email]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status !== 'active') return res.status(403).json({ error: 'account_blocked' });
+    if (user.blocked_until) {
+      const until = new Date(user.blocked_until);
+      const now = new Date();
+      if (until.getTime() > now.getTime()) {
+        return res.status(403).json({ error: 'account_blocked_until', blockedUntil: user.blocked_until });
+      }
+    }
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, storeId: user.store_id }, JWT_SECRET, { expiresIn: '7d' });
@@ -135,23 +144,50 @@ function requireAdmin(req, res, next) {
   next();
 }
 
+// Ensure user is active and not beyond blocked_until on every request
+async function ensureActiveUser(req, res, next) {
+  try {
+    const db = await dbPromise;
+    const row = await db.get('SELECT id, status, blocked_until FROM users WHERE id = ?', [req.user.id]);
+    if (!row) return res.status(401).json({ error: 'invalid_token_user' });
+    // If already blocked, deny
+    if (row.status !== 'active') return res.status(403).json({ error: 'account_blocked' });
+    // If has a block date
+    if (row.blocked_until) {
+      const until = new Date(row.blocked_until);
+      const now = new Date();
+      if (until.getTime() > now.getTime()) {
+        return res.status(403).json({ error: 'account_blocked_until', blockedUntil: row.blocked_until });
+      }
+      // If past due, permanently block and clear date, require manual admin unblock
+      if (until.getTime() <= now.getTime()) {
+        await db.run('UPDATE users SET status = "blocked", blocked_until = NULL WHERE id = ?', [req.user.id]);
+        return res.status(403).json({ error: 'account_blocked' });
+      }
+    }
+    next();
+  } catch {
+    return res.status(500).json({ error: 'internal_error' });
+  }
+}
+
 // Admin user management
-app.get('/users', auth, requireAdmin, async (_req, res) => {
+app.get('/users', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
   const db = await dbPromise;
-  const users = await db.all('SELECT id, name, email, role, status, store_id as storeId, created_at FROM users ORDER BY id DESC');
+  const users = await db.all('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users ORDER BY id DESC');
   res.json(users);
 });
 
-app.post('/users', auth, requireAdmin, async (req, res) => {
+app.post('/users', auth, ensureActiveUser, requireAdmin, async (req, res) => {
   try {
-    const { name, email, password, role = 'user', store_id, storeId } = req.body;
+    const { name, email, password, role = 'user', store_id, storeId, blockedUntil } = req.body;
     const normalizedStoreId = store_id || storeId;
     if (!name || !email || !password || !normalizedStoreId) return res.status(400).json({ error: 'name, email, password, storeId required' });
     if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     const db = await dbPromise;
     const hash = await bcrypt.hash(password, 10);
-    const result = await db.run('INSERT INTO users (name, email, password, role, status, store_id) VALUES (?, ?, ?, ?, "active", ?)', [name, email, hash, role, normalizedStoreId]);
-    const created = await db.get('SELECT id, name, email, role, status, store_id as storeId, created_at FROM users WHERE id = ?', [result.lastID]);
+    const result = await db.run('INSERT INTO users (name, email, password, role, status, blocked_until, store_id) VALUES (?, ?, ?, ?, "active", ?, ?)', [name, email, hash, role, blockedUntil || null, normalizedStoreId]);
+    const created = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users WHERE id = ?', [result.lastID]);
     res.status(201).json(created);
   } catch (e) {
     if (String(e).includes('UNIQUE')) return res.status(409).json({ error: 'email_exists' });
@@ -159,57 +195,58 @@ app.post('/users', auth, requireAdmin, async (req, res) => {
   }
 });
 
-app.patch('/users/:id/block', auth, requireAdmin, async (req, res) => {
+app.patch('/users/:id/block', auth, ensureActiveUser, requireAdmin, async (req, res) => {
   const db = await dbPromise;
   await db.run('UPDATE users SET status = "blocked" WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
 });
 
-app.patch('/users/:id/unblock', auth, requireAdmin, async (req, res) => {
+app.patch('/users/:id/unblock', auth, ensureActiveUser, requireAdmin, async (req, res) => {
   const db = await dbPromise;
   await db.run('UPDATE users SET status = "active" WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
 });
 
 // Optional: update user (role/storeId)
-app.patch('/users/:id', auth, requireAdmin, async (req, res) => {
-  const { role, storeId, status } = req.body;
+app.patch('/users/:id', auth, ensureActiveUser, requireAdmin, async (req, res) => {
+  const { role, storeId, status, blockedUntil } = req.body;
   const fields = [];
   const args = [];
   if (role) { fields.push('role = ?'); args.push(role); }
   if (storeId) { fields.push('store_id = ?'); args.push(storeId); }
   if (status) { fields.push('status = ?'); args.push(status); }
+  if (typeof blockedUntil !== 'undefined') { fields.push('blocked_until = ?'); args.push(blockedUntil || null); }
   if (!fields.length) return res.status(400).json({ error: 'no_fields' });
   args.push(req.params.id);
   const db = await dbPromise;
   await db.run(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, args);
-  const row = await db.get('SELECT id, email, role, status, store_id as storeId, created_at FROM users WHERE id = ?', [req.params.id]);
+  const row = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users WHERE id = ?', [req.params.id]);
   res.json(row);
 });
 
 // Products
-app.get('/products', auth, async (req, res) => {
+app.get('/products', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const q = String(req.query.q || '').trim().toLowerCase();
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
   const params = [storeId];
   let sql = 'SELECT * FROM products WHERE store_id = ? ORDER BY id DESC';
   if (q) {
-    sql = 'SELECT * FROM products WHERE store_id = ? AND (lower(name) LIKE ? OR lower(sku) LIKE ?) ORDER BY id DESC';
-    params.push(`%${q}%`, `%${q}%`);
+    sql = 'SELECT * FROM products WHERE store_id = ? AND (lower(name) LIKE ?) ORDER BY id DESC';
+    params.push(`%${q}%`);
   }
   const rows = await db.all(sql, params);
   res.json(rows);
 });
 
-app.post('/products', auth, async (req, res) => {
+app.post('/products', auth, ensureActiveUser, async (req, res) => {
   try {
-    const { name, price, stock, sku, cost, low_stock_threshold } = req.body;
+    const { name, price, stock, low_stock_threshold } = req.body;
     if (!name || price == null) return res.status(400).json({ error: 'name and price required' });
     const db = await dbPromise;
     const result = await db.run(
-      'INSERT INTO products (name, sku, cost, price, stock, low_stock_threshold, store_id, account_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, sku ?? null, cost ?? 0, price, stock ?? 0, low_stock_threshold ?? 0, req.user.storeId, req.user.id]
+      'INSERT INTO products (name, price, stock, low_stock_threshold, store_id, account_id) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, price, stock ?? 0, low_stock_threshold ?? 0, req.user.storeId, req.user.id]
     );
     const created = await db.get('SELECT * FROM products WHERE id = ?', [result.lastID]);
     res.status(201).json(created);
@@ -219,13 +256,13 @@ app.post('/products', auth, async (req, res) => {
 });
 
 // Update product
-app.put('/products/:id', auth, async (req, res) => {
+app.put('/products/:id', auth, ensureActiveUser, async (req, res) => {
   try {
-    const { name, price, stock, sku, cost, low_stock_threshold } = req.body;
+    const { name, price, stock, low_stock_threshold } = req.body;
     const db = await dbPromise;
     await db.run(
-      'UPDATE products SET name = ?, sku = ?, cost = ?, price = ?, stock = ?, low_stock_threshold = ? WHERE id = ? AND store_id = ?',
-      [name, sku ?? null, cost ?? 0, price, stock ?? 0, low_stock_threshold ?? 0, req.params.id, req.user.storeId]
+      'UPDATE products SET name = ?, price = ?, stock = ?, low_stock_threshold = ? WHERE id = ? AND store_id = ?',
+      [name, price, stock ?? 0, low_stock_threshold ?? 0, req.params.id, req.user.storeId]
     );
     const updated = await db.get('SELECT * FROM products WHERE id = ?', [req.params.id]);
     if (!updated) return res.status(404).json({ error: 'not_found' });
@@ -236,7 +273,7 @@ app.put('/products/:id', auth, async (req, res) => {
 });
 
 // Delete product
-app.delete('/products/:id', auth, async (req, res) => {
+app.delete('/products/:id', auth, ensureActiveUser, async (req, res) => {
   try {
     const db = await dbPromise;
     await db.run('DELETE FROM products WHERE id = ? AND store_id = ?', [req.params.id, req.user.storeId]);
@@ -247,7 +284,7 @@ app.delete('/products/:id', auth, async (req, res) => {
 });
 
 // Low stock
-app.get('/products/low_stock', auth, async (req, res) => {
+app.get('/products/low_stock', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const rows = await db.all(
     'SELECT * FROM products WHERE store_id = ? AND stock <= low_stock_threshold ORDER BY stock ASC',
@@ -257,14 +294,14 @@ app.get('/products/low_stock', auth, async (req, res) => {
 });
 
 // Sales
-app.get('/sales', auth, async (req, res) => {
+app.get('/sales', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
   const rows = await db.all('SELECT * FROM sales WHERE store_id = ? ORDER BY sale_date DESC', [storeId]);
   res.json(rows);
 });
 
-app.post('/sales', auth, async (req, res) => {
+app.post('/sales', auth, ensureActiveUser, async (req, res) => {
   try {
     const { product_id, product_name, quantity, unit_price, sale_date } = req.body;
     if (!product_id || !product_name || !quantity || unit_price == null || !sale_date) {
@@ -285,7 +322,7 @@ app.post('/sales', auth, async (req, res) => {
 });
 
 // Daily summary
-app.get('/summary/daily', auth, async (req, res) => {
+app.get('/summary/daily', auth, ensureActiveUser, async (req, res) => {
   const { date } = req.query; // yyyy-mm-dd
   if (!date) return res.status(400).json({ error: 'date required (yyyy-mm-dd)' });
   const db = await dbPromise;
@@ -300,7 +337,7 @@ app.get('/summary/daily', auth, async (req, res) => {
 });
 
 // Clients (per store)
-app.get('/clients', auth, async (req, res) => {
+app.get('/clients', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
   const q = String(req.query.q || '').trim().toLowerCase();
@@ -311,7 +348,7 @@ app.get('/clients', auth, async (req, res) => {
   res.json(rows);
 });
 
-app.post('/clients', auth, async (req, res) => {
+app.post('/clients', auth, ensureActiveUser, async (req, res) => {
   try {
     const { name, phone, storeId: storeIdBody } = req.body;
     if (!name) return res.status(400).json({ error: 'name required' });
@@ -326,7 +363,7 @@ app.post('/clients', auth, async (req, res) => {
   }
 });
 
-app.put('/clients/:id', auth, async (req, res) => {
+app.put('/clients/:id', auth, ensureActiveUser, async (req, res) => {
   try {
     const { name, phone } = req.body;
     const db = await dbPromise;
@@ -339,7 +376,7 @@ app.put('/clients/:id', auth, async (req, res) => {
   }
 });
 
-app.delete('/clients/:id', auth, async (req, res) => {
+app.delete('/clients/:id', auth, ensureActiveUser, async (req, res) => {
   try {
     const db = await dbPromise;
     await db.run('DELETE FROM clients WHERE id = ? AND store_id = ?', [req.params.id, req.user.storeId]);
@@ -350,7 +387,7 @@ app.delete('/clients/:id', auth, async (req, res) => {
 });
 
 // Admin global stats
-app.get('/admin/stats', auth, requireAdmin, async (_req, res) => {
+app.get('/admin/stats', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
   const db = await dbPromise;
   const totals = await db.get('SELECT COUNT(*) as users, SUM(CASE WHEN status="active" THEN 1 ELSE 0 END) as active_users FROM users');
   const sales = await db.get('SELECT COUNT(*) as sales_count, COALESCE(SUM(total_price),0) as revenue FROM sales');
