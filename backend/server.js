@@ -36,6 +36,7 @@ async function createDb() {
       status TEXT NOT NULL DEFAULT 'active',
       blocked_until TEXT,
       store_id TEXT,
+      store_name TEXT,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE TABLE IF NOT EXISTS products (
@@ -58,10 +59,12 @@ async function createDb() {
       unit_price REAL NOT NULL,
       total_price REAL NOT NULL,
       sale_date TEXT NOT NULL,
+      client_id INTEGER,
       store_id TEXT,
       account_id INTEGER,
       created_at TEXT NOT NULL DEFAULT (datetime('now')),
-      FOREIGN KEY(product_id) REFERENCES products(id)
+      FOREIGN KEY(product_id) REFERENCES products(id),
+      FOREIGN KEY(client_id) REFERENCES clients(id)
     );
     CREATE TABLE IF NOT EXISTS clients (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -78,6 +81,7 @@ async function createDb() {
   await safeAlter('ALTER TABLE users ADD COLUMN store_id TEXT');
   await safeAlter('ALTER TABLE users ADD COLUMN name TEXT');
   await safeAlter('ALTER TABLE users ADD COLUMN blocked_until TEXT');
+  await safeAlter('ALTER TABLE users ADD COLUMN store_name TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN sku TEXT');
   await safeAlter('ALTER TABLE products ADD COLUMN cost REAL DEFAULT 0');
   await safeAlter('ALTER TABLE products ADD COLUMN low_stock_threshold INTEGER NOT NULL DEFAULT 0');
@@ -85,6 +89,7 @@ async function createDb() {
   await safeAlter('ALTER TABLE products ADD COLUMN account_id INTEGER');
   await safeAlter('ALTER TABLE sales ADD COLUMN store_id TEXT');
   await safeAlter('ALTER TABLE sales ADD COLUMN account_id INTEGER');
+  await safeAlter('ALTER TABLE sales ADD COLUMN client_id INTEGER');
 
   // Seed default admin
   const existingAdmin = await db.get('SELECT id FROM users WHERE email = ?', [ADMIN_EMAIL]);
@@ -107,7 +112,7 @@ app.post('/auth/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'email and password required' });
     const db = await dbPromise;
-    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id FROM users WHERE email = ?', [email]);
+    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name FROM users WHERE email = ?', [email]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status !== 'active') return res.status(403).json({ error: 'account_blocked' });
     if (user.blocked_until) {
@@ -120,7 +125,7 @@ app.post('/auth/login', async (req, res) => {
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, storeId: user.store_id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, email: user.email, role: user.role, storeId: user.store_id } });
+    res.json({ token, user: { id: user.id, email: user.email, role: user.role, storeId: user.store_id, storeName: user.store_name, name: user.name } });
   } catch (e) {
     res.status(500).json({ error: 'internal_error' });
   }
@@ -174,20 +179,21 @@ async function ensureActiveUser(req, res, next) {
 // Admin user management
 app.get('/users', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
   const db = await dbPromise;
-  const users = await db.all('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users ORDER BY id DESC');
+  const users = await db.all('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, store_name as storeName, created_at FROM users ORDER BY id DESC');
   res.json(users);
 });
 
 app.post('/users', auth, ensureActiveUser, requireAdmin, async (req, res) => {
   try {
-    const { name, email, password, role = 'user', store_id, storeId, blockedUntil } = req.body;
+    const { name, email, password, role = 'user', store_id, storeId, store_name, storeName, blockedUntil } = req.body;
     const normalizedStoreId = store_id || storeId;
-    if (!name || !email || !password || !normalizedStoreId) return res.status(400).json({ error: 'name, email, password, storeId required' });
+    const normalizedStoreName = store_name || storeName;
+    if (!name || !email || !password || !normalizedStoreId || !normalizedStoreName) return res.status(400).json({ error: 'name, email, password, storeId, storeName required' });
     if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     const db = await dbPromise;
     const hash = await bcrypt.hash(password, 10);
-    const result = await db.run('INSERT INTO users (name, email, password, role, status, blocked_until, store_id) VALUES (?, ?, ?, ?, "active", ?, ?)', [name, email, hash, role, blockedUntil || null, normalizedStoreId]);
-    const created = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users WHERE id = ?', [result.lastID]);
+    const result = await db.run('INSERT INTO users (name, email, password, role, status, blocked_until, store_id, store_name) VALUES (?, ?, ?, ?, "active", ?, ?, ?)', [name, email, hash, role, blockedUntil || null, normalizedStoreId, normalizedStoreName]);
+    const created = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, store_name as storeName, created_at FROM users WHERE id = ?', [result.lastID]);
     res.status(201).json(created);
   } catch (e) {
     if (String(e).includes('UNIQUE')) return res.status(409).json({ error: 'email_exists' });
@@ -220,8 +226,22 @@ app.patch('/users/:id', auth, ensureActiveUser, requireAdmin, async (req, res) =
   args.push(req.params.id);
   const db = await dbPromise;
   await db.run(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, args);
-  const row = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, created_at FROM users WHERE id = ?', [req.params.id]);
+  const row = await db.get('SELECT id, name, email, role, status, blocked_until as blockedUntil, store_id as storeId, store_name as storeName, created_at FROM users WHERE id = ?', [req.params.id]);
   res.json(row);
+});
+
+// Admin: change user password
+app.patch('/users/:id/password', auth, ensureActiveUser, requireAdmin, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || String(newPassword).length < 6) return res.status(400).json({ error: 'password_min_6' });
+    const db = await dbPromise;
+    const hash = await bcrypt.hash(String(newPassword), 10);
+    await db.run('UPDATE users SET password = ? WHERE id = ?', [hash, req.params.id]);
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: 'internal_error' });
+  }
 });
 
 // Products
@@ -297,24 +317,34 @@ app.get('/products/low_stock', auth, ensureActiveUser, async (req, res) => {
 app.get('/sales', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
-  const rows = await db.all('SELECT * FROM sales WHERE store_id = ? ORDER BY sale_date DESC', [storeId]);
+  const rows = await db.all(
+    `SELECT s.*, c.name AS client_name
+     FROM sales s
+     LEFT JOIN clients c ON c.id = s.client_id
+     WHERE s.store_id = ?
+     ORDER BY s.sale_date DESC`,
+    [storeId]
+  );
   res.json(rows);
 });
 
 app.post('/sales', auth, ensureActiveUser, async (req, res) => {
   try {
-    const { product_id, product_name, quantity, unit_price, sale_date } = req.body;
+    const { product_id, product_name, quantity, unit_price, sale_date, client_id } = req.body;
     if (!product_id || !product_name || !quantity || unit_price == null || !sale_date) {
       return res.status(400).json({ error: 'missing fields' });
     }
     const total_price = Number(unit_price) * Number(quantity);
     const db = await dbPromise;
     const result = await db.run(
-      `INSERT INTO sales (product_id, product_name, quantity, unit_price, total_price, sale_date, store_id, account_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-      [product_id, product_name, quantity, unit_price, total_price, sale_date, req.user.storeId, req.user.id]
+      `INSERT INTO sales (product_id, product_name, quantity, unit_price, total_price, sale_date, client_id, store_id, account_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [product_id, product_name, quantity, unit_price, total_price, sale_date, client_id || null, req.user.storeId, req.user.id]
     );
-    const created = await db.get('SELECT * FROM sales WHERE id = ?', [result.lastID]);
+    const created = await db.get(
+      `SELECT s.*, c.name AS client_name FROM sales s LEFT JOIN clients c ON c.id = s.client_id WHERE s.id = ?`,
+      [result.lastID]
+    );
     res.status(201).json(created);
   } catch (e) {
     res.status(500).json({ error: 'internal_error' });

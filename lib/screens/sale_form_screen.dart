@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../models/product.dart';
 import '../models/sale.dart';
+import '../services/api_client.dart';
+import 'dart:convert';
 import '../repositories/products_repository.dart';
 
 class SaleFormScreen extends StatefulWidget {
@@ -14,6 +16,7 @@ class SaleFormScreen extends StatefulWidget {
 class _SaleFormScreenState extends State<SaleFormScreen> {
   final _formKey = GlobalKey<FormState>();
   Product? _selectedProduct;
+  Map<String, dynamic>? _selectedClient;
   final _quantityController = TextEditingController();
   final _unitPriceController = TextEditingController();
   double _totalPrice = 0.0;
@@ -156,6 +159,36 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           padding: EdgeInsets.only(top: 4),
                           child: LinearProgressIndicator(minHeight: 2),
                         ),
+                      const SizedBox(height: 16),
+                      // Cliente (opcional)
+                      InputDecorator(
+                        decoration: const InputDecoration(
+                          labelText: 'Cliente (opcional)',
+                          border: OutlineInputBorder(),
+                        ),
+                        child: InkWell(
+                          onTap: _pickClient,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    _selectedClient == null
+                                        ? 'Selecionar cliente'
+                                        : (_selectedClient!['name']
+                                                  as String? ??
+                                              'Cliente'),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                const Icon(Icons.arrow_drop_down),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 16),
                       // Quantidade
                       TextFormField(
@@ -374,6 +407,12 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
         totalPrice: totalPrice,
         saleDate: DateTime.now(),
         createdAt: DateTime.now(),
+        clientId: _selectedClient != null
+            ? (_selectedClient!['id'] as int?)
+            : null,
+        clientName: _selectedClient != null
+            ? (_selectedClient!['name'] as String?)
+            : null,
       );
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -387,5 +426,70 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
 
       Navigator.pop(context, sale);
     }
+  }
+
+  Future<void> _pickClient() async {
+    final resp = await ApiClient.get('/clients', auth: true);
+    if (resp.statusCode != 200) return;
+    final List<dynamic> clients = (jsonDecode(resp.body) as List)
+        .cast<dynamic>();
+    if (!mounted) return;
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (_) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (ctx, controller) {
+            return Column(
+              children: [
+                const SizedBox(height: 8),
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Selecionar Cliente',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: ListView.separated(
+                    controller: controller,
+                    itemBuilder: (_, i) {
+                      final c = clients[i] as Map<String, dynamic>;
+                      return ListTile(
+                        leading: const Icon(Icons.person_outline),
+                        title: Text((c['name'] ?? 'Cliente').toString()),
+                        subtitle: Text((c['phone'] ?? '').toString()),
+                        onTap: () {
+                          setState(() {
+                            _selectedClient = c;
+                          });
+                          Navigator.pop(context);
+                        },
+                      );
+                    },
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemCount: clients.length,
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

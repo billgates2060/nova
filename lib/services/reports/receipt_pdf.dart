@@ -3,6 +3,7 @@ import 'package:pdf/widgets.dart' as pw;
 
 Future<Uint8List> buildReceiptPdf({
   required String storeName,
+  String? clientName,
   required DateTime date,
   required List<Map<String, dynamic>> items, // {name, qty, price, total}
   required double total,
@@ -21,6 +22,8 @@ Future<Uint8List> buildReceiptPdf({
           ),
           pw.SizedBox(height: 8),
           pw.Text('Data: $date'),
+          if (clientName != null && clientName.isNotEmpty)
+            pw.Text('Cliente: $clientName'),
           pw.Divider(),
           pw.Table(
             border: null,

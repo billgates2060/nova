@@ -320,16 +320,15 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _callAdmin() async {
-    const tel = 'tel:+245956605604';
-    final uri = Uri.parse(tel);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
+    final Uri uri = Uri(scheme: 'tel', path: '+245956605604');
+    final bool can = await canLaunchUrl(uri);
+    if (can) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Não foi possível abrir o discador.')),
-        );
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir o discador.')),
+      );
     }
   }
 }

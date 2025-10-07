@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import 'admin_create_user_screen.dart';
 import '../services/auth_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
@@ -15,12 +16,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   List<dynamic> _users = [];
   Map<String, dynamic>? _stats;
 
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _nameController = TextEditingController();
-  final _storeIdController = TextEditingController();
-  DateTime? _blockedUntil;
-  String _role = 'user';
+  // Inline creation form removed; creation moved to AdminCreateUserScreen
 
   @override
   void initState() {
@@ -41,44 +37,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     });
   }
 
-  Future<void> _createUser() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-    final name = _nameController.text.trim();
-    final storeId = _storeIdController.text.trim();
-    if (name.isEmpty || email.isEmpty || password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preencha nome, email e senha (>= 6)')),
-      );
-      return;
-    }
-    final body = {
-      'name': name,
-      'email': email,
-      'password': password,
-      'role': _role,
-      if (storeId.isNotEmpty) 'store_id': storeId,
-      if (_blockedUntil != null)
-        'blockedUntil': _blockedUntil!.toIso8601String(),
-    };
-    final resp = await ApiClient.post('/users', body, auth: true);
-    if (resp.statusCode == 201) {
-      _emailController.clear();
-      _passwordController.clear();
-      _nameController.clear();
-      _storeIdController.clear();
-      setState(() {
-        _role = 'user';
-      });
+  Future<void> _goToCreateUser() async {
+    final created = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const AdminCreateUserScreen()),
+    );
+    if (created == true) {
       await _loadAll();
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Usuário criado')));
-    } else {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Erro: ${resp.body}')));
     }
   }
 
@@ -94,6 +58,55 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     }
   }
 
+  Future<void> _changePasswordDialog(int userId) async {
+    final ctrl = TextEditingController();
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Alterar senha'),
+        content: TextField(
+          controller: ctrl,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'Nova senha (>= 6)',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Salvar'),
+          ),
+        ],
+      ),
+    );
+    if (ok == true) {
+      final newPassword = ctrl.text;
+      if (newPassword.length < 6) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Senha deve ter ao menos 6 caracteres')),
+        );
+        return;
+      }
+      final resp = await ApiClient.patch('/users/$userId/password', {
+        'newPassword': newPassword,
+      }, auth: true);
+      if (resp.statusCode == 200) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Senha alterada')));
+      } else {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro: ${resp.body}')));
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -101,6 +114,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         title: const Text('Admin - Contas'),
         actions: [
           IconButton(onPressed: _loadAll, icon: const Icon(Icons.refresh)),
+          IconButton(
+            onPressed: _goToCreateUser,
+            icon: const Icon(Icons.person_add_alt_1),
+            tooltip: 'Criar usuário',
+          ),
           IconButton(
             onPressed: () async {
               await AuthService.logout();
@@ -121,8 +139,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_stats != null) _buildStatsCard(_stats!),
-                  const SizedBox(height: 16),
-                  _buildCreateUserCard(),
                   const SizedBox(height: 16),
                   Expanded(child: _buildUsersList()),
                 ],
@@ -162,124 +178,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     );
   }
 
-  Widget _buildCreateUserCard() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Criar usuário',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(
-                labelText: 'E-mail',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(
-                labelText: 'Senha',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _storeIdController,
-              decoration: const InputDecoration(
-                labelText: 'Store ID (opcional)',
-                border: OutlineInputBorder(),
-                helperText: 'Vincula o usuário a uma loja específica',
-              ),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: InputDecorator(
-                    decoration: const InputDecoration(
-                      labelText: 'Bloqueado até (opcional)',
-                      border: OutlineInputBorder(),
-                      helperText: 'Defina a data para bloquear até lá',
-                    ),
-                    child: InkWell(
-                      onTap: () async {
-                        final now = DateTime.now();
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: _blockedUntil ?? now,
-                          firstDate: now,
-                          lastDate: DateTime(now.year + 5),
-                        );
-                        if (picked != null) {
-                          setState(() {
-                            _blockedUntil = picked;
-                          });
-                        }
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        child: Text(
-                          _blockedUntil == null
-                              ? 'Selecionar data'
-                              : _blockedUntil!.toString().split(' ').first,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _blockedUntil = null;
-                    });
-                  },
-                  icon: const Icon(Icons.clear),
-                  tooltip: 'Limpar',
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            DropdownButton<String>(
-              value: _role,
-              items: const [
-                DropdownMenuItem(value: 'user', child: Text('User')),
-                DropdownMenuItem(value: 'admin', child: Text('Admin')),
-              ],
-              onChanged: (v) {
-                if (v != null)
-                  setState(() {
-                    _role = v;
-                  });
-              },
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: _createUser,
-              icon: const Icon(Icons.add),
-              label: const Text('Criar'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  // Inline create-user UI removed
 
   Widget _buildUsersList() {
     return Card(
@@ -308,6 +207,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(u['email'] as String),
+                if ((u['storeName'] as String?)?.isNotEmpty == true)
+                  Text(
+                    'Loja: ${u['storeName']}',
+                    style: TextStyle(color: Colors.grey[700]),
+                  ),
                 const SizedBox(height: 4),
                 Wrap(
                   spacing: 8,
@@ -332,13 +236,23 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 ),
               ],
             ),
-            trailing: ElevatedButton(
-              onPressed: () => _toggleBlock(u['id'] as int, !blocked),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: blocked ? Colors.green : Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: Text(blocked ? 'Desbloquear' : 'Bloquear'),
+            trailing: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: 'Alterar senha',
+                  icon: const Icon(Icons.password),
+                  onPressed: () => _changePasswordDialog(u['id'] as int),
+                ),
+                ElevatedButton(
+                  onPressed: () => _toggleBlock(u['id'] as int, !blocked),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: blocked ? Colors.green : Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text(blocked ? 'Desbloquear' : 'Bloquear'),
+                ),
+              ],
             ),
           );
         },

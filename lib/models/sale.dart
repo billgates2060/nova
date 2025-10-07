@@ -7,6 +7,8 @@ class Sale {
   final double totalPrice;
   final DateTime saleDate;
   final DateTime createdAt;
+  final int? clientId;
+  final String? clientName;
 
   Sale({
     this.id,
@@ -17,6 +19,8 @@ class Sale {
     required this.totalPrice,
     required this.saleDate,
     required this.createdAt,
+    this.clientId,
+    this.clientName,
   });
 
   Map<String, dynamic> toMap() {

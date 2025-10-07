@@ -8,6 +8,7 @@ class AuthService {
   static const String _userNameKey = 'user_name';
   static const String _userRoleKey = 'user_role';
   static const String _storeIdKey = 'store_id';
+  static const String _storeNameKey = 'store_name';
 
   // Dados de usuários locais (em um app real, isso viria de um banco de dados)
   static final Map<String, Map<String, String>> _users = {
@@ -40,11 +41,17 @@ class AuthService {
       final emailStr = user['email'] as String;
       final roleStr = (user['role'] as String?) ?? 'user';
       final storeIdStr = (user['storeId'] as String?) ?? '';
+      final storeNameStr = (user['storeName'] as String?) ?? '';
+      final displayName =
+          (user['name'] as String?) ?? emailStr.split('@').first;
       await prefs.setString(_userEmailKey, emailStr);
-      await prefs.setString(_userNameKey, emailStr.split('@').first);
+      await prefs.setString(_userNameKey, displayName);
       await prefs.setString(_userRoleKey, roleStr);
       if (storeIdStr.isNotEmpty) {
         await prefs.setString(_storeIdKey, storeIdStr);
+      }
+      if (storeNameStr.isNotEmpty) {
+        await prefs.setString(_storeNameKey, storeNameStr);
       }
       await ApiClient.saveToken(token);
       return {

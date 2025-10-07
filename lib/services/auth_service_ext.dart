@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AuthKeys {
   static const userRole = 'user_role';
   static const storeId = 'store_id';
+  static const storeName = 'store_name';
   static const userName = 'user_name';
   static const userEmail = 'user_email';
   static const isLoggedIn = 'is_logged_in';
@@ -13,12 +14,14 @@ class AuthProfile {
   final String name;
   final String role;
   final String storeId;
+  final String storeName;
 
   const AuthProfile({
     required this.email,
     required this.name,
     required this.role,
     required this.storeId,
+    required this.storeName,
   });
 
   bool get isAdmin => role == 'admin';
@@ -30,9 +33,14 @@ class AuthProfile {
     final name = prefs.getString(AuthKeys.userName) ?? '';
     final role = prefs.getString(AuthKeys.userRole) ?? 'user';
     final storeId = prefs.getString(AuthKeys.storeId) ?? '';
+    final storeName = prefs.getString(AuthKeys.storeName) ?? '';
     if (email.isEmpty || storeId.isEmpty) return null;
-    return AuthProfile(email: email, name: name, role: role, storeId: storeId);
+    return AuthProfile(
+      email: email,
+      name: name,
+      role: role,
+      storeId: storeId,
+      storeName: storeName,
+    );
   }
 }
-
-

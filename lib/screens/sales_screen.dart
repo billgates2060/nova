@@ -46,6 +46,8 @@ class _SalesScreenState extends State<SalesScreen> {
               totalPrice: (m['total_price'] as num).toDouble(),
               saleDate: DateTime.parse(m['sale_date']),
               createdAt: DateTime.parse(m['created_at']),
+              clientId: m['client_id'] as int?,
+              clientName: (m['client_name'] as String?),
             ),
           )
           .toList();
@@ -184,6 +186,12 @@ class _SalesScreenState extends State<SalesScreen> {
                               Text(
                                 'Quantidade: ${sale.quantity} x ${Currency.fcfa(sale.unitPrice)}',
                               ),
+                              if (sale.clientName != null &&
+                                  sale.clientName!.isNotEmpty)
+                                Text(
+                                  'Cliente: ${sale.clientName}',
+                                  style: TextStyle(color: Colors.grey[700]),
+                                ),
                               Text(
                                 '${sale.saleDate.day}/${sale.saleDate.month}/${sale.saleDate.year} às ${sale.saleDate.hour.toString().padLeft(2, '0')}:${sale.saleDate.minute.toString().padLeft(2, '0')}',
                                 style: TextStyle(
@@ -193,13 +201,49 @@ class _SalesScreenState extends State<SalesScreen> {
                               ),
                             ],
                           ),
-                          trailing: Text(
-                            Currency.fcfa(sale.totalPrice),
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Colors.green,
-                            ),
+                          trailing: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                Currency.fcfa(sale.totalPrice),
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Compartilhar recibo',
+                                icon: const Icon(
+                                  Icons.picture_as_pdf,
+                                  size: 20,
+                                ),
+                                onPressed: () async {
+                                  final items = [
+                                    {
+                                      'name': sale.productName,
+                                      'qty': sale.quantity,
+                                      'price': sale.unitPrice,
+                                      'total': sale.totalPrice,
+                                    },
+                                  ];
+                                  final pdfBytes = await buildReceiptPdf(
+                                    storeName: 'NOVA - Loja',
+                                    clientName: sale.clientName,
+                                    date: sale.saleDate,
+                                    items: items,
+                                    total: sale.totalPrice,
+                                    paid: sale.totalPrice,
+                                    troco: 0,
+                                  );
+                                  await Printing.sharePdf(
+                                    bytes: pdfBytes,
+                                    filename:
+                                        'recibo_${sale.id ?? DateTime.now().millisecondsSinceEpoch}.pdf',
+                                  );
+                                },
+                              ),
+                            ],
                           ),
                         ),
                       );
@@ -255,6 +299,7 @@ class _SalesScreenState extends State<SalesScreen> {
         'quantity': result.quantity,
         'unit_price': result.unitPrice,
         'sale_date': result.saleDate.toIso8601String(),
+        if (result.clientId != null) 'client_id': result.clientId,
       }, auth: true);
       await _loadSales();
       // Gerar e compartilhar recibo (PDF)
@@ -268,6 +313,7 @@ class _SalesScreenState extends State<SalesScreen> {
       ];
       final pdfBytes = await buildReceiptPdf(
         storeName: 'NOVA - Loja',
+        clientName: result.clientName,
         date: DateTime.now(),
         items: items,
         total: result.totalPrice,

@@ -4,7 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io' show Platform;
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+// Web uses default IndexedDB via sqflite_common_ffi_web indirectly; no direct import needed
 
 class LocalDb {
   static Database? _db;
@@ -14,8 +14,7 @@ class LocalDb {
 
     // Initialize the appropriate database factory per platform
     if (kIsWeb) {
-      // Use IndexedDB without a web worker to avoid extra setup
-      databaseFactory = databaseFactoryFfiWebNoWebWorker;
+      // On web, do not override the database factory; avoid loading sqlite3.wasm
     } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
       // Initialize FFI for desktop platforms
       sqfliteFfiInit();

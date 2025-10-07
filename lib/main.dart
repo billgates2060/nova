@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:sqflite/sqflite.dart';
-import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
+// kIsWeb no longer used here
 import 'services/hive_service.dart';
 import 'services/notifications_service.dart';
 import 'services/auth_service.dart';
@@ -12,9 +10,6 @@ import 'package:nova/l10n/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  if (kIsWeb) {
-    databaseFactory = databaseFactoryFfiWebNoWebWorker;
-  }
   await HiveService.init();
   await NotificationsService.init();
   runApp(const MyApp());
