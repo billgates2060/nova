@@ -128,7 +128,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
               ],
             ),
           ),
-          // Resumo do dia
+          // Resumo do dia (layout refinado)
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(20),
@@ -149,6 +149,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
               ],
             ),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   'Resumo do Dia',
@@ -157,26 +158,48 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 20),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildSummaryCard(
-                      'Total Vendido',
-                      Currency.fcfa(dailySummary.totalSales),
-                      Icons.attach_money,
-                    ),
-                    _buildSummaryCard(
-                      'Produtos Vendidos',
-                      '${dailySummary.totalProductsSold}',
-                      Icons.shopping_cart,
-                    ),
-                    _buildSummaryCard(
-                      'Vendas',
-                      '${dailySummary.sales.length}',
-                      Icons.receipt,
-                    ),
-                  ],
+                const SizedBox(height: 16),
+                LayoutBuilder(
+                  builder: (context, c) {
+                    final isWide = c.maxWidth > 640;
+                    final cards = [
+                      _buildSummaryCard(
+                        'Total Vendido',
+                        Currency.fcfa(dailySummary.totalSales),
+                        Icons.attach_money,
+                      ),
+                      _buildSummaryCard(
+                        'Produtos Vendidos',
+                        '${dailySummary.totalProductsSold}',
+                        Icons.shopping_cart,
+                      ),
+                      _buildSummaryCard(
+                        'Vendas',
+                        '${dailySummary.sales.length}',
+                        Icons.receipt,
+                      ),
+                    ];
+                    if (isWide) {
+                      return Row(
+                        children: [
+                          Expanded(child: cards[0]),
+                          const SizedBox(width: 12),
+                          Expanded(child: cards[1]),
+                          const SizedBox(width: 12),
+                          Expanded(child: cards[2]),
+                        ],
+                      );
+                    }
+                    return Column(
+                      children: [
+                        cards[0],
+                        const SizedBox(height: 12),
+                        cards[1],
+                        const SizedBox(height: 12),
+                        cards[2],
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

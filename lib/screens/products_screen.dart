@@ -115,48 +115,66 @@ class _ProductsScreenState extends State<ProductsScreen> {
               itemCount: _filtered.length,
               itemBuilder: (context, index) {
                 final product = _filtered[index];
-                return Card(
+                return Container(
                   margin: const EdgeInsets.only(bottom: 12),
-                  elevation: 2,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue[100],
+                    leading: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.blue[50],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      padding: const EdgeInsets.all(10),
                       child: Icon(Icons.inventory_2, color: Colors.blue[700]),
                     ),
                     title: Text(
                       product.name,
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Preço: ${Currency.fcfa(product.price)}'),
-                        Row(
-                          children: [
-                            Text('Estoque: ${product.stockQuantity} unidades'),
-                            if (product.stockQuantity <= 3)
-                              Container(
-                                margin: const EdgeInsets.only(left: 8),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 2,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red[50],
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'Baixo',
-                                  style: TextStyle(
-                                    color: Colors.red[700],
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w700,
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Preço: ${Currency.fcfa(product.price)}'),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              Text('Estoque: ${product.stockQuantity} un'),
+                              if (product.stockQuantity <= 3)
+                                Container(
+                                  margin: const EdgeInsets.only(left: 8),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red[50],
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'Baixo',
+                                    style: TextStyle(
+                                      color: Colors.red[700],
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
-                              ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                     trailing: PopupMenuButton<String>(
                       onSelected: (value) {

@@ -55,28 +55,52 @@ class _ClientsScreenState extends State<ClientsScreen> {
           ? const Center(child: CircularProgressIndicator())
           : _clients.isEmpty
           ? const Center(child: Text('Nenhum cliente'))
-          : ListView.separated(
+          : ListView.builder(
+              padding: const EdgeInsets.all(16),
               itemCount: _clients.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
               itemBuilder: (_, i) {
                 final c = _clients[i];
-                return ListTile(
-                  leading: CircleAvatar(
-                    child: Text(
-                      (c['name'] as String).substring(0, 1).toUpperCase(),
-                    ),
-                  ),
-                  title: Text(c['name'] as String),
-                  subtitle: Text((c['phone'] ?? '').toString()),
-                  trailing: PopupMenuButton<String>(
-                    onSelected: (v) {
-                      if (v == 'edit') _editClient(c);
-                      if (v == 'delete') _deleteClient(c);
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'edit', child: Text('Editar')),
-                      PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                final initial = (c['name'] as String)
+                    .trim()
+                    .substring(0, 1)
+                    .toUpperCase();
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.08),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
                     ],
+                  ),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: Colors.indigo[50],
+                      foregroundColor: Colors.indigo[700],
+                      child: Text(initial),
+                    ),
+                    title: Text(
+                      c['name'] as String,
+                      style: const TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: Text((c['phone'] ?? '').toString()),
+                    ),
+                    trailing: PopupMenuButton<String>(
+                      onSelected: (v) {
+                        if (v == 'edit') _editClient(c);
+                        if (v == 'delete') _deleteClient(c);
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(value: 'edit', child: Text('Editar')),
+                        PopupMenuItem(value: 'delete', child: Text('Excluir')),
+                      ],
+                    ),
                   ),
                 );
               },

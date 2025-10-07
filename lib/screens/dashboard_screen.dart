@@ -9,6 +9,9 @@ import 'welcome_screen.dart';
 import 'settings_screen.dart';
 import 'clients_screen.dart';
 import '../widgets/app_drawer.dart';
+import '../services/auth_service_ext.dart';
+import '../services/notifications_service.dart';
+import 'notifications_screen.dart';
 import 'package:nova/l10n/app_localizations.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -74,11 +77,13 @@ class DashboardHome extends StatefulWidget {
 
 class _DashboardHomeState extends State<DashboardHome> {
   late Future<Map<String, dynamic>> _future;
+  late Future<AuthProfile?> _profileFuture;
 
   @override
   void initState() {
     super.initState();
     _future = DashboardService.fetchOverview();
+    _profileFuture = AuthProfile.current();
   }
 
   Future<void> _refresh() async {
@@ -103,14 +108,48 @@ class _DashboardHomeState extends State<DashboardHome> {
         centerTitle: true,
         elevation: 0,
         actions: [
-          Tooltip(
-            message: AppLocalizations.of(context)!.notifications,
-            child: IconButton(
-              onPressed: () {
-                // Implementar notificações
-              },
-              icon: const Icon(Icons.notifications_outlined),
-            ),
+          ValueListenableBuilder<int>(
+            valueListenable: NotificationsService.unreadCount,
+            builder: (context, count, _) {
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    tooltip: AppLocalizations.of(context)!.notifications,
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.notifications_outlined),
+                  ),
+                  if (count > 0)
+                    Positioned(
+                      right: 10,
+                      top: 12,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '$count',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
           ),
           FutureBuilder<String?>(
             future: AuthService.getRole(),
@@ -187,51 +226,70 @@ class _DashboardHomeState extends State<DashboardHome> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Saudação
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [
-                            Color(0xFF1E40AF),
-                            Color(0xFF3B82F6),
-                            Color(0xFF60A5FA),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF1E40AF).withOpacity(0.3),
-                            blurRadius: 20,
-                            offset: const Offset(0, 8),
+                    // Hero/Header com nome da loja e KPIs
+                    FutureBuilder<AuthProfile?>(
+                      future: _profileFuture,
+                      builder: (context, profSnap) {
+                        final storeName =
+                            profSnap.data?.storeName ?? 'Sua Loja';
+                        return Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(24),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [Color(0xFF1E40AF), Color(0xFF3B82F6)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(20),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF1E40AF,
+                                ).withOpacity(0.25),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
+                              ),
+                            ],
                           ),
-                          BoxShadow(
-                            color: Colors.white.withOpacity(0.1),
-                            blurRadius: 10,
-                            offset: const Offset(0, -4),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
+                              Text(
+                                storeName,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Resumo de hoje',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.95),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              LayoutBuilder(
+                                builder: (context, c) {
+                                  final isWide = c.maxWidth > 640;
+                                  final cards = [
                                     _buildSummaryCard(
-                                      'Vendas hoje',
+                                      'Vendas',
                                       '$todaysSalesCount',
                                       Icons.shopping_cart_rounded,
                                       const Color(0xFF10B981),
                                       context,
                                     ),
-                                    const SizedBox(height: 8),
+                                    _buildSummaryCard(
+                                      'Faturamento',
+                                      'R\$ ${todaysRevenue.toStringAsFixed(2)}',
+                                      Icons.attach_money_rounded,
+                                      const Color(0xFF8B5CF6),
+                                      context,
+                                    ),
                                     _buildSummaryCard(
                                       'Produtos',
                                       '$productsCount',
@@ -239,51 +297,33 @@ class _DashboardHomeState extends State<DashboardHome> {
                                       const Color(0xFF3B82F6),
                                       context,
                                     ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.all(12),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.2),
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                child: _buildSummaryCard(
-                                  'Faturamento hoje',
-                                  'R\$ ${todaysRevenue.toStringAsFixed(2)}',
-                                  Icons.attach_money_rounded,
-                                  const Color(0xFF8B5CF6),
-                                  context,
-                                ),
+                                  ];
+                                  if (isWide) {
+                                    return Row(
+                                      children: [
+                                        Expanded(child: cards[0]),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: cards[1]),
+                                        const SizedBox(width: 12),
+                                        Expanded(child: cards[2]),
+                                      ],
+                                    );
+                                  }
+                                  return Column(
+                                    children: [
+                                      cards[0],
+                                      const SizedBox(height: 12),
+                                      cards[1],
+                                      const SizedBox(height: 12),
+                                      cards[2],
+                                    ],
+                                  );
+                                },
                               ),
                             ],
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildSummaryCard(
-                            'Vendas hoje',
-                            '$todaysSalesCount',
-                            Icons.shopping_cart_rounded,
-                            const Color(0xFF10B981),
-                            context,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildSummaryCard(
-                            'Faturamento hoje',
-                            'R\$ ${todaysRevenue.toStringAsFixed(2)}',
-                            Icons.attach_money_rounded,
-                            const Color(0xFF8B5CF6),
-                            context,
-                          ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     // Progresso gamificado (meta simples = 10 vendas)
@@ -644,7 +684,7 @@ class _DailyGoalProgress extends StatelessWidget {
   const _DailyGoalProgress({required this.current, required this.goal});
   @override
   Widget build(BuildContext context) {
-    final double pct = ((current / goal).clamp(0.0, 1.0)) as double;
+    final double pct = (current / goal).clamp(0.0, 1.0);
     final emoji = pct >= 1 ? '🎉' : (pct >= 0.5 ? '💪' : '🚀');
     return Container(
       width: double.infinity,
