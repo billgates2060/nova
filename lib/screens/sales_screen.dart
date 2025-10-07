@@ -4,10 +4,14 @@ import '../services/api_client.dart';
 import 'package:nova/l10n/app_localizations.dart';
 import 'package:printing/printing.dart';
 import '../services/reports/receipt_pdf.dart';
+import '../services/print_service.dart';
 import 'dart:convert';
 import '../services/currency.dart';
 import 'sale_form_screen.dart';
 import '../services/sync_service.dart';
+import 'receipts_history_screen.dart';
+import '../widgets/responsive_widgets.dart';
+import '../services/currency.dart';
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
@@ -81,8 +85,8 @@ class _SalesScreenState extends State<SalesScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context)!.sales),
+      appBar: ResponsiveAppBar(
+        title: AppLocalizations.of(context)!.sales,
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
         actions: [
@@ -105,10 +109,22 @@ class _SalesScreenState extends State<SalesScreen> {
             },
           ),
           IconButton(
+            icon: const Icon(Icons.receipt_long),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => const ReceiptsHistoryScreen(),
+                ),
+              );
+            },
+            tooltip: 'Histórico de Recibos',
+          ),
+          IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
               // Implementar filtros
             },
+            tooltip: 'Filtros',
           ),
         ],
       ),
@@ -212,36 +228,54 @@ class _SalesScreenState extends State<SalesScreen> {
                                   color: Colors.green,
                                 ),
                               ),
-                              IconButton(
-                                tooltip: 'Compartilhar recibo',
-                                icon: const Icon(
-                                  Icons.picture_as_pdf,
-                                  size: 20,
-                                ),
-                                onPressed: () async {
-                                  final items = [
-                                    {
-                                      'name': sale.productName,
-                                      'qty': sale.quantity,
-                                      'price': sale.unitPrice,
-                                      'total': sale.totalPrice,
-                                    },
-                                  ];
-                                  final pdfBytes = await buildReceiptPdf(
-                                    storeName: 'NOVA - Loja',
-                                    clientName: sale.clientName,
-                                    date: sale.saleDate,
-                                    items: items,
-                                    total: sale.totalPrice,
-                                    paid: sale.totalPrice,
-                                    troco: 0,
-                                  );
-                                  await Printing.sharePdf(
-                                    bytes: pdfBytes,
-                                    filename:
-                                        'recibo_${sale.id ?? DateTime.now().millisecondsSinceEpoch}.pdf',
-                                  );
+                              PopupMenuButton<String>(
+                                tooltip: 'Opções de Recibo',
+                                onSelected: (value) async {
+                                  await _handleReceiptAction(value, sale);
                                 },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(
+                                    value: 'preview',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.visibility, color: Colors.blue),
+                                        SizedBox(width: 8),
+                                        Text('Visualizar'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'print',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.print, color: Colors.green),
+                                        SizedBox(width: 8),
+                                        Text('Imprimir'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'share',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.share, color: Colors.orange),
+                                        SizedBox(width: 8),
+                                        Text('Compartilhar'),
+                                      ],
+                                    ),
+                                  ),
+                                  const PopupMenuItem(
+                                    value: 'save',
+                                    child: Row(
+                                      children: [
+                                        Icon(Icons.save, color: Colors.purple),
+                                        SizedBox(width: 8),
+                                        Text('Salvar'),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                                child: const Icon(Icons.more_vert),
                               ),
                             ],
                           ),
@@ -302,28 +336,139 @@ class _SalesScreenState extends State<SalesScreen> {
         if (result.clientId != null) 'client_id': result.clientId,
       }, auth: true);
       await _loadSales();
-      // Gerar e compartilhar recibo (PDF)
-      final items = [
-        {
-          'name': result.productName,
-          'qty': result.quantity,
-          'price': result.unitPrice,
-          'total': result.totalPrice,
-        },
-      ];
-      final pdfBytes = await buildReceiptPdf(
-        storeName: 'NOVA - Loja',
-        clientName: result.clientName,
-        date: DateTime.now(),
-        items: items,
-        total: result.totalPrice,
-        paid: result.totalPrice,
-        troco: 0,
+      
+      // Gerar e compartilhar recibo automaticamente
+      await _generateAndShareReceipt(result);
+    }
+  }
+
+  Future<void> _generateAndShareReceipt(Sale sale) async {
+    try {
+      final config = await PrintService.getDefaultConfig();
+      final receiptData = PrintService.createSaleReceipt(
+        receiptNumber: '${sale.id ?? DateTime.now().millisecondsSinceEpoch}',
+        date: sale.saleDate,
+        items: [
+          ReceiptItem(
+            name: sale.productName,
+            quantity: sale.quantity,
+            unitPrice: sale.unitPrice,
+            total: sale.totalPrice,
+          ),
+        ],
+        total: sale.totalPrice,
+        paid: sale.totalPrice,
+        client: sale.clientName != null 
+            ? ReceiptClient(name: sale.clientName)
+            : null,
       );
-      await Printing.sharePdf(
-        bytes: pdfBytes,
-        filename: 'recibo_${DateTime.now().millisecondsSinceEpoch}.pdf',
+
+      await PrintService.shareReceipt(
+        receiptData: receiptData,
+        config: config,
       );
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Recibo gerado e compartilhado com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao gerar recibo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _handleReceiptAction(String action, Sale sale) async {
+    try {
+      final config = await PrintService.getDefaultConfig();
+      final receiptData = PrintService.createSaleReceipt(
+        receiptNumber: '${sale.id ?? DateTime.now().millisecondsSinceEpoch}',
+        date: sale.saleDate,
+        items: [
+          ReceiptItem(
+            name: sale.productName,
+            quantity: sale.quantity,
+            unitPrice: sale.unitPrice,
+            total: sale.totalPrice,
+          ),
+        ],
+        total: sale.totalPrice,
+        paid: sale.totalPrice,
+        client: sale.clientName != null 
+            ? ReceiptClient(name: sale.clientName)
+            : null,
+      );
+
+      switch (action) {
+        case 'preview':
+          await PrintService.previewReceipt(
+            receiptData: receiptData,
+            config: config,
+            context: context,
+          );
+          break;
+        case 'print':
+          await PrintService.printReceipt(
+            receiptData: receiptData,
+            config: config,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recibo enviado para impressão!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          break;
+        case 'share':
+          await PrintService.shareReceipt(
+            receiptData: receiptData,
+            config: config,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recibo compartilhado com sucesso!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          break;
+        case 'save':
+          await PrintService.saveReceipt(
+            receiptData: receiptData,
+            config: config,
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Recibo salvo com sucesso!'),
+                backgroundColor: Colors.green,
+              ),
+            );
+          }
+          break;
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Erro ao processar recibo: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 }

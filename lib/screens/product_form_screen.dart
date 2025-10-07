@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nova/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import '../models/product.dart';
+import '../widgets/responsive_widgets.dart';
 
 class ProductFormScreen extends StatefulWidget {
   final Product? product;
@@ -55,13 +56,10 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         backgroundColor: Colors.blue[600],
         foregroundColor: Colors.white,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+      body: ResponsivePadding(
+        child: ResponsiveForm(
+          formKey: _formKey,
+          children: [
               Card(
                 elevation: 4,
                 child: Padding(
@@ -173,12 +171,11 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
+              ResponsiveButton(
                 onPressed: _saveProduct,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
@@ -193,8 +190,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
                   ),
                 ),
               ),
-            ],
-          ),
+          ],
         ),
       ),
     );

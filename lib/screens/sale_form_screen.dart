@@ -5,6 +5,8 @@ import '../models/sale.dart';
 import '../services/api_client.dart';
 import 'dart:convert';
 import '../repositories/products_repository.dart';
+import '../services/currency.dart';
+import '../widgets/responsive_widgets.dart';
 
 class SaleFormScreen extends StatefulWidget {
   const SaleFormScreen({super.key});
@@ -99,8 +101,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: ResponsivePadding(
         child: Form(
           key: _formKey,
           child: Column(
@@ -277,7 +278,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            '${_totalPrice.toStringAsFixed(2)} FCFA',
+                            Currency.fcfa(_totalPrice, decimals: 2),
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   fontWeight: FontWeight.bold,
@@ -358,7 +359,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          'Troco: ${(_paid - _totalPrice).clamp(0, double.infinity).toStringAsFixed(2)} FCFA',
+                          'Troco: ${Currency.fcfa(((_paid - _totalPrice).clamp(0, double.infinity)), decimals: 2)}',
                           style: TextStyle(
                             color: Colors.green[700],
                             fontWeight: FontWeight.bold,
@@ -418,7 +419,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Venda registrada com sucesso! Total: ${totalPrice.toStringAsFixed(2)} FCFA',
+            'Venda registrada com sucesso! Total: ${Currency.fcfa(totalPrice, decimals: 2)}',
           ),
           backgroundColor: Colors.green[600],
         ),

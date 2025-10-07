@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
@@ -11,7 +13,23 @@ import jwt from 'jsonwebtoken';
 dotenv.config();
 
 const app = express();
-app.use(cors());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
+}));
+app.use(cors({
+  origin: '*',
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+app.disable('x-powered-by');
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+app.use(limiter);
 app.use(express.json());
 
 const DB_PATH = process.env.DB_PATH || './data/nova.db';
@@ -202,6 +220,11 @@ app.post('/users', auth, ensureActiveUser, requireAdmin, async (req, res) => {
 });
 
 app.patch('/users/:id/block', auth, ensureActiveUser, requireAdmin, async (req, res) => {
+  // Prevent admin from blocking themselves
+  if (req.params.id == req.user.id) {
+    return res.status(400).json({ error: 'cannot_block_self' });
+  }
+  
   const db = await dbPromise;
   await db.run('UPDATE users SET status = "blocked" WHERE id = ?', [req.params.id]);
   res.json({ ok: true });
@@ -248,15 +271,24 @@ app.patch('/users/:id/password', auth, ensureActiveUser, requireAdmin, async (re
 app.get('/products', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const q = String(req.query.q || '').trim().toLowerCase();
+  const sort = String(req.query.sort || 'id'); // id,name,price,stock
+  const order = String(req.query.order || 'desc').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  const page = Math.max(1, Number(req.query.page || 1));
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 20)));
+  const offset = (page - 1) * pageSize;
+  const allowedSort = new Set(['id','name','price','stock','created_at']);
+  const sortCol = allowedSort.has(sort) ? sort : 'id';
+
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
   const params = [storeId];
-  let sql = 'SELECT * FROM products WHERE store_id = ? ORDER BY id DESC';
-  if (q) {
-    sql = 'SELECT * FROM products WHERE store_id = ? AND (lower(name) LIKE ?) ORDER BY id DESC';
-    params.push(`%${q}%`);
-  }
-  const rows = await db.all(sql, params);
-  res.json(rows);
+  let where = 'WHERE store_id = ?';
+  if (q) { where += ' AND (lower(name) LIKE ?)'; params.push(`%${q}%`); }
+  const countRow = await db.get(`SELECT COUNT(*) as total FROM products ${where}`, params);
+  const rows = await db.all(
+    `SELECT * FROM products ${where} ORDER BY ${sortCol} ${order} LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset]
+  );
+  res.json({ items: rows, total: countRow.total, page, pageSize });
 });
 
 app.post('/products', auth, ensureActiveUser, async (req, res) => {
@@ -317,15 +349,32 @@ app.get('/products/low_stock', auth, ensureActiveUser, async (req, res) => {
 app.get('/sales', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
+  const q = String(req.query.q || '').trim().toLowerCase();
+  const sort = String(req.query.sort || 'sale_date');
+  const order = String(req.query.order || 'desc').toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+  const page = Math.max(1, Number(req.query.page || 1));
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 20)));
+  const offset = (page - 1) * pageSize;
+  const allowedSort = new Set(['sale_date','total_price','quantity','id']);
+  const sortCol = allowedSort.has(sort) ? sort : 'sale_date';
+
+  const params = [storeId];
+  let where = 'WHERE s.store_id = ?';
+  if (q) { where += ' AND (lower(s.product_name) LIKE ? OR lower(c.name) LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+  const countRow = await db.get(
+    `SELECT COUNT(*) as total FROM sales s LEFT JOIN clients c ON c.id = s.client_id ${where}`,
+    params
+  );
   const rows = await db.all(
     `SELECT s.*, c.name AS client_name
      FROM sales s
      LEFT JOIN clients c ON c.id = s.client_id
-     WHERE s.store_id = ?
-     ORDER BY s.sale_date DESC`,
-    [storeId]
+     ${where}
+     ORDER BY s.${sortCol} ${order}
+     LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset]
   );
-  res.json(rows);
+  res.json({ items: rows, total: countRow.total, page, pageSize });
 });
 
 app.post('/sales', auth, ensureActiveUser, async (req, res) => {
@@ -371,11 +420,68 @@ app.get('/clients', auth, ensureActiveUser, async (req, res) => {
   const db = await dbPromise;
   const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
   const q = String(req.query.q || '').trim().toLowerCase();
-  let sql = 'SELECT * FROM clients WHERE store_id = ? ORDER BY name ASC';
+  const sort = String(req.query.sort || 'name');
+  const order = String(req.query.order || 'asc').toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+  const page = Math.max(1, Number(req.query.page || 1));
+  const pageSize = Math.min(100, Math.max(1, Number(req.query.pageSize || 20)));
+  const offset = (page - 1) * pageSize;
+  const allowedSort = new Set(['name','id','created_at']);
+  const sortCol = allowedSort.has(sort) ? sort : 'name';
+
   const params = [storeId];
-  if (q) { sql = 'SELECT * FROM clients WHERE store_id = ? AND (lower(name) LIKE ? OR phone LIKE ?) ORDER BY name ASC'; params.push(`%${q}%`, `%${q}%`); }
-  const rows = await db.all(sql, params);
-  res.json(rows);
+  let where = 'WHERE store_id = ?';
+  if (q) { where += ' AND (lower(name) LIKE ? OR phone LIKE ?)'; params.push(`%${q}%`, `%${q}%`); }
+  const countRow = await db.get(`SELECT COUNT(*) as total FROM clients ${where}`, params);
+  const rows = await db.all(
+    `SELECT * FROM clients ${where} ORDER BY ${sortCol} ${order} LIMIT ? OFFSET ?`,
+    [...params, pageSize, offset]
+  );
+  res.json({ items: rows, total: countRow.total, page, pageSize });
+});
+
+// CSV exports
+function toCsv(rows) {
+  if (!rows || rows.length === 0) return '';
+  const headers = Object.keys(rows[0]);
+  const escape = (v) => String(v ?? '').replaceAll('"', '""');
+  const head = headers.join(',');
+  const body = rows.map(r => headers.map(h => `"${escape(r[h])}"`).join(',')).join('\n');
+  return `${head}\n${body}`;
+}
+
+app.get('/export/products.csv', auth, ensureActiveUser, async (req, res) => {
+  const db = await dbPromise;
+  const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
+  const rows = await db.all('SELECT id, name, sku, price, stock, low_stock_threshold, created_at FROM products WHERE store_id = ? ORDER BY id DESC', [storeId]);
+  const csv = toCsv(rows);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="products.csv"');
+  res.send(csv);
+});
+
+app.get('/export/sales.csv', auth, ensureActiveUser, async (req, res) => {
+  const db = await dbPromise;
+  const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
+  const rows = await db.all(
+    `SELECT s.id, s.product_name, s.quantity, s.unit_price, s.total_price, s.sale_date, c.name AS client_name
+     FROM sales s LEFT JOIN clients c ON c.id = s.client_id
+     WHERE s.store_id = ? ORDER BY s.sale_date DESC`,
+    [storeId]
+  );
+  const csv = toCsv(rows);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="sales.csv"');
+  res.send(csv);
+});
+
+app.get('/export/clients.csv', auth, ensureActiveUser, async (req, res) => {
+  const db = await dbPromise;
+  const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
+  const rows = await db.all('SELECT id, name, phone, created_at FROM clients WHERE store_id = ? ORDER BY name ASC', [storeId]);
+  const csv = toCsv(rows);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', 'attachment; filename="clients.csv"');
+  res.send(csv);
 });
 
 app.post('/clients', auth, ensureActiveUser, async (req, res) => {
@@ -416,12 +522,39 @@ app.delete('/clients/:id', auth, ensureActiveUser, async (req, res) => {
   }
 });
 
-// Admin global stats
+// Admin global stats (all stores combined)
 app.get('/admin/stats', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
   const db = await dbPromise;
   const totals = await db.get('SELECT COUNT(*) as users, SUM(CASE WHEN status="active" THEN 1 ELSE 0 END) as active_users FROM users');
   const sales = await db.get('SELECT COUNT(*) as sales_count, COALESCE(SUM(total_price),0) as revenue FROM sales');
   res.json({ users: totals.users, activeUsers: totals.active_users, salesCount: sales.sales_count, revenue: sales.revenue });
+});
+
+// Admin stats by store
+app.get('/admin/stats/:storeId', auth, ensureActiveUser, requireAdmin, async (req, res) => {
+  const db = await dbPromise;
+  const storeId = req.params.storeId;
+  
+  const totals = await db.get('SELECT COUNT(*) as users, SUM(CASE WHEN status="active" THEN 1 ELSE 0 END) as active_users FROM users WHERE store_id = ?', [storeId]);
+  const sales = await db.get('SELECT COUNT(*) as sales_count, COALESCE(SUM(total_price),0) as revenue FROM sales WHERE store_id = ?', [storeId]);
+  const products = await db.get('SELECT COUNT(*) as products_count FROM products WHERE store_id = ?', [storeId]);
+  const clients = await db.get('SELECT COUNT(*) as clients_count FROM clients WHERE store_id = ?', [storeId]);
+  
+  res.json({ 
+    users: totals.users, 
+    activeUsers: totals.active_users, 
+    salesCount: sales.sales_count, 
+    revenue: sales.revenue,
+    productsCount: products.products_count,
+    clientsCount: clients.clients_count
+  });
+});
+
+// Get all stores for admin
+app.get('/admin/stores', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
+  const db = await dbPromise;
+  const stores = await db.all('SELECT DISTINCT store_id, store_name FROM users WHERE store_id IS NOT NULL ORDER BY store_name');
+  res.json(stores);
 });
 
 const PORT = Number(process.env.PORT || 3000);

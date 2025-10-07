@@ -1,11 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import '../services/admin_service.dart';
+import '../widgets/responsive_widgets.dart';
 import 'admin_create_user_screen.dart';
 import '../services/auth_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
-  const AdminUsersScreen({super.key});
+  final StoreInfo? selectedStore;
+  
+  const AdminUsersScreen({super.key, this.selectedStore});
 
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
@@ -158,7 +162,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
             _stat('Usuários', '${stats['users']}'),
             _stat('Ativos', '${stats['activeUsers']}'),
             _stat('Vendas', '${stats['salesCount']}'),
-            _stat('Receita', 'R\$ ${stats['revenue']}'),
+            _stat('Receita', Currency.fcfa((stats['revenue'] ?? 0) as num)),
           ],
         ),
       ),

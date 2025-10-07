@@ -4,11 +4,14 @@ import 'sales_screen.dart';
 import 'daily_summary_screen.dart';
 import '../services/auth_service.dart';
 import 'admin_users_screen.dart';
+import 'admin_store_selector_screen.dart';
 import '../services/dashboard_service.dart';
 import 'welcome_screen.dart';
 import 'settings_screen.dart';
 import 'clients_screen.dart';
+import 'receipts_history_screen.dart';
 import '../widgets/app_drawer.dart';
+import '../widgets/responsive_widgets.dart';
 import '../services/auth_service_ext.dart';
 import '../services/notifications_service.dart';
 import 'notifications_screen.dart';
@@ -34,35 +37,116 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      drawer: const AppDrawer(),
-      body: _screens[_currentIndex],
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
-        selectedItemColor: Colors.blue[600],
-        unselectedItemColor: Colors.grey[600],
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Início'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2),
-            label: 'Produtos',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.shopping_cart),
-            label: 'Vendas',
-          ),
-          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Resumo'),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.people_alt),
-            label: 'Clientes',
-          ),
-        ],
+    return ResponsiveWidget(
+      mobile: Scaffold(
+        drawer: const AppDrawer(),
+        body: _screens[_currentIndex],
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _currentIndex,
+          onTap: (index) {
+            setState(() {
+              _currentIndex = index;
+            });
+          },
+          selectedItemColor: Colors.blue[600],
+          unselectedItemColor: Colors.grey[600],
+          items: const [
+            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Início'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.inventory_2),
+              label: 'Produtos',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.shopping_cart),
+              label: 'Vendas',
+            ),
+            BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Resumo'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.people_alt),
+              label: 'Clientes',
+            ),
+          ],
+        ),
+      ),
+      tablet: Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard),
+                  label: Text('Início'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.inventory_2),
+                  label: Text('Produtos'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.shopping_cart),
+                  label: Text('Vendas'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.analytics),
+                  label: Text('Resumo'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people_alt),
+                  label: Text('Clientes'),
+                ),
+              ],
+            ),
+            const VerticalDivider(thickness: 1, width: 1),
+            Expanded(child: _screens[_currentIndex]),
+          ],
+        ),
+      ),
+      desktop: Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              extended: true,
+              selectedIndex: _currentIndex,
+              onDestinationSelected: (index) {
+                setState(() {
+                  _currentIndex = index;
+                });
+              },
+              labelType: NavigationRailLabelType.all,
+              destinations: const [
+                NavigationRailDestination(
+                  icon: Icon(Icons.dashboard),
+                  label: Text('Início'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.inventory_2),
+                  label: Text('Produtos'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.shopping_cart),
+                  label: Text('Vendas'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.analytics),
+                  label: Text('Resumo'),
+                ),
+                NavigationRailDestination(
+                  icon: Icon(Icons.people_alt),
+                  label: Text('Clientes'),
+                ),
+              ],
+            ),
+            const VerticalDivider(thickness: 1, width: 1),
+            Expanded(child: _screens[_currentIndex]),
+          ],
+        ),
       ),
     );
   }
@@ -162,7 +246,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                   onPressed: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => const AdminUsersScreen(),
+                        builder: (_) => const AdminStoreSelectorScreen(),
                       ),
                     );
                   },
@@ -221,11 +305,11 @@ class _DashboardHomeState extends State<DashboardHome> {
             onRefresh: _refresh,
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 250),
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
+              child: ResponsivePadding(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
                     // Hero/Header com nome da loja e KPIs
                     FutureBuilder<AuthProfile?>(
                       future: _profileFuture,
@@ -272,53 +356,33 @@ class _DashboardHomeState extends State<DashboardHome> {
                                 ),
                               ),
                               const SizedBox(height: 16),
-                              LayoutBuilder(
-                                builder: (context, c) {
-                                  final isWide = c.maxWidth > 640;
-                                  final cards = [
-                                    _buildSummaryCard(
-                                      'Vendas',
-                                      '$todaysSalesCount',
-                                      Icons.shopping_cart_rounded,
-                                      const Color(0xFF10B981),
-                                      context,
-                                    ),
-                                    _buildSummaryCard(
-                                      'Faturamento',
-                                      'R\$ ${todaysRevenue.toStringAsFixed(2)}',
-                                      Icons.attach_money_rounded,
-                                      const Color(0xFF8B5CF6),
-                                      context,
-                                    ),
-                                    _buildSummaryCard(
-                                      'Produtos',
-                                      '$productsCount',
-                                      Icons.inventory_2_rounded,
-                                      const Color(0xFF3B82F6),
-                                      context,
-                                    ),
-                                  ];
-                                  if (isWide) {
-                                    return Row(
-                                      children: [
-                                        Expanded(child: cards[0]),
-                                        const SizedBox(width: 12),
-                                        Expanded(child: cards[1]),
-                                        const SizedBox(width: 12),
-                                        Expanded(child: cards[2]),
-                                      ],
-                                    );
-                                  }
-                                  return Column(
-                                    children: [
-                                      cards[0],
-                                      const SizedBox(height: 12),
-                                      cards[1],
-                                      const SizedBox(height: 12),
-                                      cards[2],
-                                    ],
-                                  );
-                                },
+                              ResponsiveGrid(
+                                mobileColumns: 1,
+                                tabletColumns: 2,
+                                desktopColumns: 3,
+                                children: [
+                                  _buildSummaryCard(
+                                    'Vendas',
+                                    '$todaysSalesCount',
+                                    Icons.shopping_cart_rounded,
+                                    const Color(0xFF10B981),
+                                    context,
+                                  ),
+                                  _buildSummaryCard(
+                                    'Faturamento',
+                                    Currency.fcfa(todaysRevenue),
+                                    Icons.attach_money_rounded,
+                                    const Color(0xFF8B5CF6),
+                                    context,
+                                  ),
+                                  _buildSummaryCard(
+                                    'Produtos',
+                                    '$productsCount',
+                                    Icons.inventory_2_rounded,
+                                    const Color(0xFF3B82F6),
+                                    context,
+                                  ),
+                                ],
                               ),
                             ],
                           ),
@@ -356,42 +420,89 @@ class _DashboardHomeState extends State<DashboardHome> {
                       },
                       context,
                     ),
-                    Row(
+                    ResponsiveGrid(
+                      mobileColumns: 1,
+                      tabletColumns: 2,
+                      desktopColumns: 3,
                       children: [
-                        Expanded(
-                          child: _buildActionCard(
-                            'Novo Produto',
-                            Icons.add_box_rounded,
-                            const Color(0xFF3B82F6),
-                            () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const ProductsScreen(),
-                                ),
-                              );
-                            },
-                            context,
-                          ),
+                        _buildActionCard(
+                          'Novo Produto',
+                          Icons.add_box_rounded,
+                          const Color(0xFF3B82F6),
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ProductsScreen(),
+                              ),
+                            );
+                          },
+                          context,
                         ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildActionCard(
-                            'Ver Relatórios',
-                            Icons.analytics_rounded,
-                            const Color(0xFF8B5CF6),
-                            () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const DailySummaryScreen(),
-                                ),
-                              );
-                            },
-                            context,
-                          ),
+                        _buildActionCard(
+                          'Ver Relatórios',
+                          Icons.analytics_rounded,
+                          const Color(0xFF8B5CF6),
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const DailySummaryScreen(),
+                              ),
+                            );
+                          },
+                          context,
+                        ),
+                        _buildActionCard(
+                          'Recibos',
+                          Icons.receipt_long_rounded,
+                          const Color(0xFFF59E0B),
+                          () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => const ReceiptsHistoryScreen(),
+                              ),
+                            );
+                          },
+                          context,
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
+                    // Botão de Gerenciamento de Lojas (apenas para admin)
+                    FutureBuilder<String?>(
+                      future: AuthService.getRole(),
+                      builder: (context, roleSnapshot) {
+                        final isAdmin = roleSnapshot.data == 'admin';
+                        if (!isAdmin) return const SizedBox.shrink();
+                        
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Administração',
+                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey[800],
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildActionCard(
+                              'Gerenciar Lojas',
+                              Icons.store_rounded,
+                              const Color(0xFF8B5CF6),
+                              () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) => const AdminStoreSelectorScreen(),
+                                  ),
+                                );
+                              },
+                              context,
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+                        );
+                      },
+                    ),
                     Text(
                       'Vendas Recentes',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -423,7 +534,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                             _buildRecentSaleItem(
                               (s['product_name'] ?? 'Produto').toString(),
                               '${s['quantity']}x',
-                              'R\$ ${(s['total_price'] as num?)?.toStringAsFixed(2) ?? '0,00'}',
+                              Currency.fcfa((s['total_price'] as num?) ?? 0),
                               context,
                             ),
                         ],
