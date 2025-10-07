@@ -8,7 +8,26 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 class ProductsRepository {
   Future<List<Map<String, dynamic>>> getAllLocal() async {
     if (kIsWeb) {
-      return [];
+      // Web: buscar direto do backend
+      try {
+        final resp = await ApiClient.get('/products', auth: true);
+        if (resp.statusCode != 200) return [];
+        final list = (jsonDecode(resp.body) as List)
+            .cast<Map<String, dynamic>>();
+        return list
+            .map(
+              (p) => {
+                'id': p['id'],
+                'name': p['name'],
+                'price': p['price'],
+                'stock': p['stock'],
+                'updated_at': DateTime.now().millisecondsSinceEpoch,
+              },
+            )
+            .toList();
+      } catch (_) {
+        return [];
+      }
     }
     final db = await LocalDb.instance();
     return db.query('products', orderBy: 'updated_at DESC');
@@ -47,21 +66,24 @@ class ProductsRepository {
 
   Future<void> syncFromRemote() async {
     final resp = await ApiClient.get('/products', auth: true);
-    if (resp.statusCode == 200) {
-      final list = (jsonDecode(resp.body) as List).cast<Map<String, dynamic>>();
-      final db = await LocalDb.instance();
-      final batch = db.batch();
-      for (final p in list) {
-        batch.insert('products', {
-          'id': p['id'],
-          'name': p['name'],
-          'price': p['price'],
-          'stock': p['stock'],
-          'updated_at': DateTime.now().millisecondsSinceEpoch,
-        }, conflictAlgorithm: ConflictAlgorithm.replace);
-      }
-      await batch.commit(noResult: true);
+    if (resp.statusCode != 200) return;
+    final list = (jsonDecode(resp.body) as List).cast<Map<String, dynamic>>();
+    if (kIsWeb) {
+      // No local DB on web; remote results are used on-demand via searchRemote
+      return;
     }
+    final db = await LocalDb.instance();
+    final batch = db.batch();
+    for (final p in list) {
+      batch.insert('products', {
+        'id': p['id'],
+        'name': p['name'],
+        'price': p['price'],
+        'stock': p['stock'],
+        'updated_at': DateTime.now().millisecondsSinceEpoch,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    await batch.commit(noResult: true);
   }
 
   Future<void> pushQueue() async {
