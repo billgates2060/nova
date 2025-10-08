@@ -44,15 +44,45 @@ class LocalDb {
           );
         ''');
         await db.execute('''
-          CREATE TABLE IF NOT EXISTS sales (
-            id INTEGER PRIMARY KEY,
+          CREATE TABLE IF NOT EXISTS sales_local (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
             product_id INTEGER NOT NULL,
             product_name TEXT NOT NULL,
             quantity INTEGER NOT NULL,
             unit_price REAL NOT NULL,
             total_price REAL NOT NULL,
             sale_date TEXT NOT NULL,
-            created_at TEXT NOT NULL
+            client_id INTEGER,
+            client_name TEXT,
+            synced INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS sales_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sale_data TEXT NOT NULL,
+            retry_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS clients_local (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT,
+            address TEXT,
+            synced INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('''
+          CREATE TABLE IF NOT EXISTS clients_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            client_data TEXT NOT NULL,
+            retry_count INTEGER DEFAULT 0,
+            created_at INTEGER NOT NULL
           );
         ''');
         await db.execute('''

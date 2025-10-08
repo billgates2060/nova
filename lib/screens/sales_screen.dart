@@ -7,9 +7,12 @@ import '../services/print_service.dart';
 import 'dart:convert';
 import 'sale_form_screen.dart';
 import '../services/sync_service.dart';
+import '../repositories/sales_repository.dart';
+import '../services/retry_service.dart';
 import 'receipts_history_screen.dart';
 import '../widgets/responsive_widgets.dart';
 import '../services/currency.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 class SalesScreen extends StatefulWidget {
   const SalesScreen({super.key});
@@ -21,6 +24,9 @@ class SalesScreen extends StatefulWidget {
 class _SalesScreenState extends State<SalesScreen> {
   List<Sale> _sales = [];
   bool _isLoading = true;
+  bool _isOfflineMode = false;
+  String? _lastError;
+  final _salesRepo = SalesRepository();
 
   @override
   void initState() {
@@ -32,47 +38,83 @@ class _SalesScreenState extends State<SalesScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
+      _lastError = null;
     });
 
-    final resp = await ApiClient.get('/sales', auth: true);
-    if (!mounted) return;
-    if (resp.statusCode == 200) {
-      final decoded = jsonDecode(resp.body);
-      final List<dynamic> rawList = decoded is List
-          ? decoded
-          : (decoded is Map && decoded['items'] is List)
-          ? decoded['items'] as List
-          : (decoded is Map && decoded['data'] is List)
-          ? decoded['data'] as List
-          : (decoded is Map && decoded['sales'] is List)
-          ? decoded['sales'] as List
-          : <dynamic>[];
-      final list = rawList
-          .map(
-            (m) => Sale(
-              id: m['id'],
-              productId: m['product_id'],
-              productName: m['product_name'],
-              quantity: (m['quantity'] as num).toInt(),
-              unitPrice: (m['unit_price'] as num).toDouble(),
-              totalPrice: (m['total_price'] as num).toDouble(),
-              saleDate: DateTime.parse(m['sale_date']),
-              createdAt: DateTime.parse(m['created_at']),
-              clientId: m['client_id'] as int?,
-              clientName: (m['client_name'] as String?),
+    try {
+      // Tentar carregar do backend primeiro
+      final remoteSales = await RetryService.networkRetry(
+        () => _salesRepo.getRemoteSales(),
+        operationName: 'carregar_vendas_backend',
+      );
+      
+      if (!mounted) return;
+      setState(() {
+        _sales = remoteSales;
+        _isOfflineMode = false;
+        _isLoading = false;
+      });
+      
+      // Sincronizar dados locais em background
+      _salesRepo.syncFromRemote();
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Erro ao carregar vendas do backend: $e');
+      }
+      
+      // Fallback: carregar do banco local
+      try {
+        final localSales = await _salesRepo.getLocalSales();
+        
+        if (!mounted) return;
+        setState(() {
+          _sales = localSales;
+          _isOfflineMode = true;
+          _isLoading = false;
+          _lastError = 'Modo offline - dados locais';
+        });
+        
+        // Mostrar aviso de modo offline
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.wifi_off, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Modo offline - dados locais',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.orange[600],
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'Tentar novamente',
+                textColor: Colors.white,
+                onPressed: () => _loadSales(),
+              ),
             ),
-          )
-          .toList();
-      if (!mounted) return;
-      setState(() {
-        _sales = list;
-        _isLoading = false;
-      });
-    } else {
-      if (!mounted) return;
-      setState(() {
-        _isLoading = false;
-      });
+          );
+        }
+        
+      } catch (localError) {
+        if (kDebugMode) {
+          print('❌ Erro ao carregar vendas locais: $localError');
+        }
+        
+        if (!mounted) return;
+        setState(() {
+          _sales = [];
+          _isOfflineMode = true;
+          _isLoading = false;
+          _lastError = 'Erro ao carregar dados: $localError';
+        });
+      }
     }
   }
 
@@ -359,19 +401,108 @@ class _SalesScreenState extends State<SalesScreen> {
 
     if (!mounted) return;
     if (result != null && result is Sale) {
-      await ApiClient.post('/sales', {
-        'product_id': result.productId,
-        'product_name': result.productName,
-        'quantity': result.quantity,
-        'unit_price': result.unitPrice,
-        'total_price': result.totalPrice,
-        'sale_date': result.saleDate.toIso8601String(),
-        if (result.clientId != null) 'client_id': result.clientId,
-      }, auth: true);
-      await _loadSales();
+      try {
+        // Salvar localmente primeiro (sempre funciona)
+        await _salesRepo.saveSaleLocally(result);
+        await _salesRepo.queueSaleForSync(result);
+        
+        // Tentar enviar para o backend
+        try {
+          await RetryService.networkRetry(
+            () async {
+              await ApiClient.post('/sales', {
+                'product_id': result.productId,
+                'product_name': result.productName,
+                'quantity': result.quantity,
+                'unit_price': result.unitPrice,
+                'total_price': result.totalPrice,
+                'sale_date': result.saleDate.toIso8601String(),
+                if (result.clientId != null) 'client_id': result.clientId,
+              }, auth: true);
+            },
+            operationName: 'enviar_venda_backend',
+          );
+          
+          // Se chegou aqui, a venda foi enviada com sucesso
+          await _loadSales();
+          
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Row(
+                  children: [
+                    Icon(Icons.check_circle, color: Colors.white),
+                    SizedBox(width: 8),
+                    Text('Venda registrada com sucesso!'),
+                  ],
+                ),
+                backgroundColor: Colors.green[600],
+                duration: Duration(seconds: 2),
+              ),
+            );
+          }
+          
+        } catch (e) {
+          // Falha no envio para o backend, mas dados estão salvos localmente
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    const Icon(Icons.warning, color: Colors.white),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Venda salva localmente. Será sincronizada quando a conexão voltar.',
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: Colors.orange[600],
+                duration: const Duration(seconds: 4),
+                action: SnackBarAction(
+                  label: 'Sincronizar',
+                  textColor: Colors.white,
+                  onPressed: () => SyncService().syncSales(),
+                ),
+              ),
+            );
+          }
+          
+          // Recarregar dados locais
+          await _loadSales();
+        }
 
-      // Gerar, compartilhar e salvar recibo automaticamente
-      await _generateAndShareAndSaveReceipt(result);
+        // Gerar, compartilhar e salvar recibo automaticamente
+        await _generateAndShareAndSaveReceipt(result);
+        
+      } catch (e) {
+        if (kDebugMode) {
+          print('❌ Erro ao salvar venda: $e');
+        }
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  const Icon(Icons.error, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Erro ao salvar venda: $e',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+              backgroundColor: Colors.red[600],
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+      }
     }
   }
 

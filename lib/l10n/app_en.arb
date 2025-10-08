@@ -16,6 +16,24 @@
   "home": "Home",
   "dailySummary": "Daily Summary",
   "adminManagement": "Account Management (Admin)",
-  "notifications": "Notifications"
+  "notifications": "Notifications",
+  "product": "Product",
+  "client": "Client",
+  "selectClient": "Select Client",
+  "quantity": "Quantity",
+  "unitPrice": "Unit Price",
+  "totalPrice": "Total Price",
+  "discountPercent": "Discount (%)",
+  "discountFixed": "Fixed Discount (FCFA)",
+  "newSaleTitle": "New Sale",
+  "selectProduct": "Select Product",
+  "stockExceeded": "Quantity greater than available stock",
+  "pleaseSelectProduct": "Please select a product",
+  "saleSaved": "Sale saved successfully!",
+  "saleSavedOffline": "Sale saved locally. Will be synced when connection returns.",
+  "syncError": "Error syncing data",
+  "offlineMode": "Offline mode - local data",
+  "syncData": "Sync data",
+  "tryAgain": "Try again"
 }
 

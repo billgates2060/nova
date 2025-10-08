@@ -129,10 +129,10 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       // Seletor de produto
                       DropdownButtonFormField<Product>(
                         value: _selectedProduct,
-                        decoration: const InputDecoration(
-                          labelText: 'Produto',
-                          prefixIcon: Icon(Icons.inventory_2),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.product,
+                          prefixIcon: const Icon(Icons.inventory_2),
+                          border: const OutlineInputBorder(),
                         ),
                         items: _products.map((Product product) {
                           return DropdownMenuItem<Product>(
@@ -152,7 +152,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                         },
                         validator: (value) {
                           if (value == null) {
-                            return 'Por favor, selecione um produto';
+                            return AppLocalizations.of(context)!.pleaseSelectProduct;
                           }
                           return null;
                         },
@@ -221,7 +221,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           }
                           if (_selectedProduct != null &&
                               quantity > _selectedProduct!.stockQuantity) {
-                            return 'Quantidade maior que o estoque disponível (${_selectedProduct!.stockQuantity})';
+                            return '${AppLocalizations.of(context)!.stockExceeded} (${_selectedProduct!.stockQuantity})';
                           }
                           return null;
                         },
@@ -300,9 +300,9 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                         children: [
                           Expanded(
                             child: TextFormField(
-                              decoration: const InputDecoration(
-                                labelText: 'Desconto (%)',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.discountPercent,
+                                border: const OutlineInputBorder(),
                               ),
                               keyboardType:
                                   const TextInputType.numberWithOptions(
@@ -322,9 +322,9 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                           const SizedBox(width: 12),
                           Expanded(
                             child: TextFormField(
-                              decoration: const InputDecoration(
-                                labelText: 'Desconto fixo (FCFA)',
-                                border: OutlineInputBorder(),
+                              decoration: InputDecoration(
+                                labelText: AppLocalizations.of(context)!.discountFixed,
+                                border: const OutlineInputBorder(),
                               ),
                               keyboardType:
                                   const TextInputType.numberWithOptions(

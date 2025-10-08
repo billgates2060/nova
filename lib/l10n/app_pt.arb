@@ -16,6 +16,24 @@
   "home": "Início",
   "dailySummary": "Resumo Diário",
   "adminManagement": "Gestão de Contas (Admin)",
-  "notifications": "Notificações"
+  "notifications": "Notificações",
+  "product": "Produto",
+  "client": "Cliente",
+  "selectClient": "Selecionar Cliente",
+  "quantity": "Quantidade",
+  "unitPrice": "Preço Unitário",
+  "totalPrice": "Preço Total",
+  "discountPercent": "Desconto (%)",
+  "discountFixed": "Desconto Fixo (FCFA)",
+  "newSaleTitle": "Nova Venda",
+  "selectProduct": "Selecionar Produto",
+  "stockExceeded": "Quantidade maior que o estoque disponível",
+  "pleaseSelectProduct": "Por favor, selecione um produto",
+  "saleSaved": "Venda salva com sucesso!",
+  "saleSavedOffline": "Venda salva localmente. Será sincronizada quando a conexão voltar.",
+  "syncError": "Erro ao sincronizar dados",
+  "offlineMode": "Modo offline - dados locais",
+  "syncData": "Sincronizar dados",
+  "tryAgain": "Tentar novamente"
 }
 

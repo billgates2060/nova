@@ -16,6 +16,24 @@
   "home": "Accueil",
   "dailySummary": "Résumé Quotidien",
   "adminManagement": "Gestion des Comptes (Admin)",
-  "notifications": "Notifications"
+  "notifications": "Notifications",
+  "product": "Produit",
+  "client": "Client",
+  "selectClient": "Sélectionner Client",
+  "quantity": "Quantité",
+  "unitPrice": "Prix Unitaire",
+  "totalPrice": "Prix Total",
+  "discountPercent": "Remise (%)",
+  "discountFixed": "Remise Fixe (FCFA)",
+  "newSaleTitle": "Nouvelle Vente",
+  "selectProduct": "Sélectionner Produit",
+  "stockExceeded": "Quantité supérieure au stock disponible",
+  "pleaseSelectProduct": "Veuillez sélectionner un produit",
+  "saleSaved": "Vente sauvegardée avec succès!",
+  "saleSavedOffline": "Vente sauvegardée localement. Sera synchronisée quand la connexion reviendra.",
+  "syncError": "Erreur de synchronisation des données",
+  "offlineMode": "Mode hors ligne - données locales",
+  "syncData": "Synchroniser les données",
+  "tryAgain": "Réessayer"
 }
 
