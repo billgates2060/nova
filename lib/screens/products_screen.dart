@@ -97,14 +97,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _isLoading ? null : _loadProducts,
-            tooltip: 'Atualizar',
+            tooltip: AppLocalizations.of(context)!.updateTooltip,
           ),
           IconButton(
             icon: const Icon(Icons.search),
             onPressed: () {
               _showSearch();
             },
-            tooltip: 'Buscar',
+            tooltip: AppLocalizations.of(context)!.searchTooltip,
           ),
         ],
       ),
@@ -114,7 +114,9 @@ class _ProductsScreenState extends State<ProductsScreen> {
           ? _buildEmptyState()
           : ResponsivePadding(
               child: ResponsiveList(
-                children: _filtered.map((product) => _buildProductCard(product)).toList(),
+                children: _filtered
+                    .map((product) => _buildProductCard(product))
+                    .toList(),
               ),
             ),
       floatingActionButton: FloatingActionButton(
@@ -141,22 +143,22 @@ class _ProductsScreenState extends State<ProductsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Buscar produtos'),
+        title: Text(AppLocalizations.of(context)!.searchProductsTitle),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: 'Nome ou código',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            labelText: AppLocalizations.of(context)!.nameOrCode,
+            border: const OutlineInputBorder(),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Buscar'),
+            child: Text(AppLocalizations.of(context)!.searchTooltip),
           ),
         ],
       ),
@@ -221,7 +223,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       color: Colors.blue[50],
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.inventory_2, color: Colors.blue[700], size: 24),
+                    child: Icon(
+                      Icons.inventory_2,
+                      color: Colors.blue[700],
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -237,7 +243,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Preço: ${Currency.fcfa(product.price)}',
+                          '${AppLocalizations.of(context)!.priceLabel}: ${Currency.fcfa(product.price)}',
                           style: TextStyle(
                             color: Colors.grey[600],
                             fontSize: 14,
@@ -247,7 +253,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         Row(
                           children: [
                             Text(
-                              'Estoque: ${product.stockQuantity} un',
+                              '${AppLocalizations.of(context)!.stockLabel}: ${product.stockQuantity} un',
                               style: TextStyle(
                                 color: Colors.grey[600],
                                 fontSize: 14,
@@ -265,7 +271,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                                 child: Text(
-                                  'Baixo',
+                                  AppLocalizations.of(context)!.lowShort,
                                   style: TextStyle(
                                     color: Colors.red[700],
                                     fontSize: 12,
@@ -288,23 +294,23 @@ class _ProductsScreenState extends State<ProductsScreen> {
                       }
                     },
                     itemBuilder: (context) => [
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'edit',
                         child: Row(
                           children: [
-                            Icon(Icons.edit, color: Colors.blue),
-                            SizedBox(width: 8),
-                            Text('Editar'),
+                            const Icon(Icons.edit, color: Colors.blue),
+                            const SizedBox(width: 8),
+                            Text(AppLocalizations.of(context)!.edit),
                           ],
                         ),
                       ),
-                      const PopupMenuItem(
+                      PopupMenuItem(
                         value: 'delete',
                         child: Row(
                           children: [
-                            Icon(Icons.delete, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Excluir'),
+                            const Icon(Icons.delete, color: Colors.red),
+                            const SizedBox(width: 8),
+                            Text(AppLocalizations.of(context)!.delete),
                           ],
                         ),
                       ),
@@ -327,14 +333,14 @@ class _ProductsScreenState extends State<ProductsScreen> {
           Icon(Icons.inventory_2_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
-            'Nenhum produto cadastrado',
+            AppLocalizations.of(context)!.noProducts,
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
-            'Toque no + para adicionar seu primeiro produto',
+            AppLocalizations.of(context)!.tapPlusToAddProduct,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),

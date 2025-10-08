@@ -111,7 +111,9 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      isToday ? 'Hoje' : 'Data Selecionada',
+                      isToday
+                          ? AppLocalizations.of(context)!.today
+                          : AppLocalizations.of(context)!.selectedDate,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         color: Colors.purple[700],
                         fontWeight: FontWeight.bold,
@@ -162,7 +164,7 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Resumo do Dia',
+                  AppLocalizations.of(context)!.daySummaryTitle,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -174,17 +176,17 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
                     final isWide = c.maxWidth > 640;
                     final cards = [
                       _buildSummaryCard(
-                        'Total Vendido',
+                        AppLocalizations.of(context)!.totalSold,
                         Currency.fcfa(dailySummary.totalSales),
                         Icons.attach_money,
                       ),
                       _buildSummaryCard(
-                        'Produtos Vendidos',
+                        AppLocalizations.of(context)!.productsSold,
                         '${dailySummary.totalProductsSold}',
                         Icons.shopping_cart,
                       ),
                       _buildSummaryCard(
-                        'Vendas',
+                        AppLocalizations.of(context)!.salesCount,
                         '${dailySummary.sales.length}',
                         Icons.receipt,
                       ),

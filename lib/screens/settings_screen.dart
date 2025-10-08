@@ -110,18 +110,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           TextField(
             controller: _currentController,
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Senha atual',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.currentPassword,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
           TextField(
             controller: _newController,
             obscureText: true,
-            decoration: const InputDecoration(
-              labelText: 'Nova senha',
-              border: OutlineInputBorder(),
+            decoration: InputDecoration(
+              labelText: AppLocalizations.of(context)!.newPasswordLabel,
+              border: const OutlineInputBorder(),
             ),
           ),
           const SizedBox(height: 12),
@@ -134,7 +134,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.lock_reset),
-            label: const Text('Salvar nova senha'),
+            label: Text(AppLocalizations.of(context)!.saveNewPassword),
           ),
         ],
       ),

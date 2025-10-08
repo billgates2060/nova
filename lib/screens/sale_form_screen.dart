@@ -7,6 +7,7 @@ import 'dart:convert';
 import '../repositories/products_repository.dart';
 import '../services/currency.dart';
 import '../widgets/responsive_widgets.dart';
+import 'package:nova/l10n/app_localizations.dart';
 
 class SaleFormScreen extends StatefulWidget {
   const SaleFormScreen({super.key});
@@ -90,14 +91,14 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Nova Venda'),
+        title: Text(AppLocalizations.of(context)!.newSaleTitle),
         backgroundColor: Colors.green[600],
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadingProducts ? null : _loadProducts,
-            tooltip: 'Atualizar produtos',
+            tooltip: AppLocalizations.of(context)!.updateProducts,
           ),
         ],
       ),
@@ -115,7 +116,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Dados da Venda',
+                        AppLocalizations.of(context)!.newSaleTitle,
                         style: Theme.of(context).textTheme.headlineSmall
                             ?.copyWith(
                               fontWeight: FontWeight.bold,
@@ -163,9 +164,10 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       const SizedBox(height: 16),
                       // Cliente (opcional)
                       InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Cliente (opcional)',
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText:
+                              '${AppLocalizations.of(context)!.client} (opcional)',
+                          border: const OutlineInputBorder(),
                         ),
                         child: InkWell(
                           onTap: _pickClient,
@@ -177,10 +179,14 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                                 Expanded(
                                   child: Text(
                                     _selectedClient == null
-                                        ? 'Selecionar cliente'
+                                        ? AppLocalizations.of(
+                                            context,
+                                          )!.selectClient
                                         : (_selectedClient!['name']
                                                   as String? ??
-                                              'Cliente'),
+                                              AppLocalizations.of(
+                                                context,
+                                              )!.client),
                                     overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
@@ -194,10 +200,10 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                       // Quantidade
                       TextFormField(
                         controller: _quantityController,
-                        decoration: const InputDecoration(
-                          labelText: 'Quantidade',
-                          prefixIcon: Icon(Icons.numbers),
-                          border: OutlineInputBorder(),
+                        decoration: InputDecoration(
+                          labelText: AppLocalizations.of(context)!.quantity,
+                          prefixIcon: const Icon(Icons.numbers),
+                          border: const OutlineInputBorder(),
                         ),
                         keyboardType: TextInputType.number,
                         inputFormatters: [
@@ -262,7 +268,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                   child: Column(
                     children: [
                       Text(
-                        'Resumo da Venda',
+                        AppLocalizations.of(context)!.daySummaryTitle,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: Colors.green[700],
@@ -382,8 +388,8 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: const Text(
-                  'Registrar Venda',
+                child: Text(
+                  AppLocalizations.of(context)!.newSaleTitle,
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ),

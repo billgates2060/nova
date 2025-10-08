@@ -50,8 +50,18 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
       } else {
         final usersResp = await ApiClient.get('/users', auth: true);
         final statsResp = await ApiClient.get('/admin/stats', auth: true);
+        final decoded = jsonDecode(usersResp.body);
+        final List<dynamic> rawUsers = decoded is List
+            ? decoded
+            : (decoded is Map && decoded['items'] is List)
+            ? decoded['items'] as List
+            : (decoded is Map && decoded['data'] is List)
+            ? decoded['data'] as List
+            : (decoded is Map && decoded['users'] is List)
+            ? decoded['users'] as List
+            : <dynamic>[];
         setState(() {
-          _users = jsonDecode(usersResp.body) as List<dynamic>;
+          _users = rawUsers;
           _stats = jsonDecode(statsResp.body) as Map<String, dynamic>;
           _loading = false;
         });

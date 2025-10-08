@@ -125,14 +125,14 @@ class _SalesScreenState extends State<SalesScreen> {
                 ),
               );
             },
-            tooltip: 'Histórico de Recibos',
+            tooltip: AppLocalizations.of(context)!.receiptsHistory,
           ),
           IconButton(
             icon: const Icon(Icons.filter_list),
             onPressed: () {
               // Implementar filtros
             },
-            tooltip: 'Filtros',
+            tooltip: AppLocalizations.of(context)!.filters,
           ),
         ],
       ),
@@ -152,7 +152,7 @@ class _SalesScreenState extends State<SalesScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(
-                      'Hoje',
+                      AppLocalizations.of(context)!.today,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.green[700],
@@ -170,7 +170,7 @@ class _SalesScreenState extends State<SalesScreen> {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${todaySales.length} vendas realizadas',
+                  '${todaySales.length} ${AppLocalizations.of(context)!.sales.toLowerCase()}',
                   style: Theme.of(
                     context,
                   ).textTheme.bodyMedium?.copyWith(color: Colors.green[600]),
@@ -237,51 +237,72 @@ class _SalesScreenState extends State<SalesScreen> {
                                 ),
                               ),
                               PopupMenuButton<String>(
-                                tooltip: 'Opções de Recibo',
+                                tooltip: AppLocalizations.of(context)!.receipts,
                                 onSelected: (value) async {
                                   await _handleReceiptAction(value, sale);
                                 },
                                 itemBuilder: (context) => [
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'preview',
                                     child: Row(
                                       children: [
-                                        Icon(
+                                        const Icon(
                                           Icons.visibility,
                                           color: Colors.blue,
                                         ),
-                                        SizedBox(width: 8),
-                                        Text('Visualizar'),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          AppLocalizations.of(context)!.preview,
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'print',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.print, color: Colors.green),
-                                        SizedBox(width: 8),
-                                        Text('Imprimir'),
+                                        const Icon(
+                                          Icons.print,
+                                          color: Colors.green,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.printLabel,
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'share',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.share, color: Colors.orange),
-                                        SizedBox(width: 8),
-                                        Text('Compartilhar'),
+                                        const Icon(
+                                          Icons.share,
+                                          color: Colors.orange,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          AppLocalizations.of(context)!.share,
+                                        ),
                                       ],
                                     ),
                                   ),
-                                  const PopupMenuItem(
+                                  PopupMenuItem(
                                     value: 'save',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.save, color: Colors.purple),
-                                        SizedBox(width: 8),
-                                        Text('Salvar'),
+                                        const Icon(
+                                          Icons.save,
+                                          color: Colors.purple,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Text(
+                                          AppLocalizations.of(
+                                            context,
+                                          )!.saveLabel,
+                                        ),
                                       ],
                                     ),
                                   ),
@@ -378,8 +399,10 @@ class _SalesScreenState extends State<SalesScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Recibo gerado e compartilhado com sucesso!'),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.receiptGeneratedSharedSuccess,
+            ),
             backgroundColor: Colors.green,
           ),
         );
@@ -388,7 +411,9 @@ class _SalesScreenState extends State<SalesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao gerar recibo: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorGeneratingReceipt} $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -432,8 +457,8 @@ class _SalesScreenState extends State<SalesScreen> {
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recibo enviado para impressão!'),
+              SnackBar(
+                content: Text(AppLocalizations.of(context)!.receiptPrintSent),
                 backgroundColor: Colors.green,
               ),
             );
@@ -446,8 +471,10 @@ class _SalesScreenState extends State<SalesScreen> {
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recibo compartilhado com sucesso!'),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.receiptSharedSuccess,
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -460,8 +487,10 @@ class _SalesScreenState extends State<SalesScreen> {
           );
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Recibo salvo com sucesso!'),
+              SnackBar(
+                content: Text(
+                  AppLocalizations.of(context)!.receiptSavedSuccess,
+                ),
                 backgroundColor: Colors.green,
               ),
             );
@@ -472,7 +501,9 @@ class _SalesScreenState extends State<SalesScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao processar recibo: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorProcessingReceipt} $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );

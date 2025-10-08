@@ -60,136 +60,136 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         child: ResponsiveForm(
           formKey: _formKey,
           children: [
-              Card(
-                elevation: 4,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Informações do Produto',
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue[700],
-                            ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: _nameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Nome do Produto',
-                          prefixIcon: Icon(Icons.inventory_2),
-                          border: OutlineInputBorder(),
-                        ),
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira o nome do produto';
-                          }
-                          return null;
-                        },
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _skuController,
-                        decoration: const InputDecoration(
-                          labelText: 'Código (SKU manual)',
-                          prefixIcon: Icon(Icons.qr_code_2),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _priceController,
-                        decoration: const InputDecoration(
-                          labelText: 'Preço (FCFA)',
-                          prefixIcon: Icon(Icons.attach_money),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp(r'^\d+\.?\d{0,2}'),
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.productInfo,
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.blue[700],
                           ),
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira o preço';
-                          }
-                          if (double.tryParse(value) == null) {
-                            return 'Por favor, insira um preço válido';
-                          }
-                          if (double.parse(value) <= 0) {
-                            return 'O preço deve ser maior que zero';
-                          }
-                          return null;
-                        },
+                    ),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.productNameField,
+                        prefixIcon: const Icon(Icons.inventory_2),
+                        border: const OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _stockController,
-                        decoration: const InputDecoration(
-                          labelText: 'Quantidade em Estoque',
-                          prefixIcon: Icon(Icons.inventory),
-                          border: OutlineInputBorder(),
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira o nome do produto';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _skuController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.skuManualField,
+                        prefixIcon: const Icon(Icons.qr_code_2),
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _priceController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.priceFcfaField,
+                        prefixIcon: const Icon(Icons.attach_money),
+                        border: const OutlineInputBorder(),
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'^\d+\.?\d{0,2}'),
                         ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
-                        validator: (value) {
-                          if (value == null || value.isEmpty) {
-                            return 'Por favor, insira a quantidade em estoque';
-                          }
-                          if (int.tryParse(value) == null) {
-                            return 'Por favor, insira um número válido';
-                          }
-                          if (int.parse(value) < 0) {
-                            return 'A quantidade não pode ser negativa';
-                          }
-                          return null;
-                        },
+                      ],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira o preço';
+                        }
+                        if (double.tryParse(value) == null) {
+                          return 'Por favor, insira um preço válido';
+                        }
+                        if (double.parse(value) <= 0) {
+                          return 'O preço deve ser maior que zero';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _stockController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(context)!.stockQtyField,
+                        prefixIcon: const Icon(Icons.inventory),
+                        border: const OutlineInputBorder(),
                       ),
-                      const SizedBox(height: 16),
-                      TextFormField(
-                        controller: _lowStockController,
-                        decoration: const InputDecoration(
-                          labelText: 'Alerta de estoque baixo (unidades)',
-                          prefixIcon: Icon(Icons.warning_amber_rounded),
-                          border: OutlineInputBorder(),
-                        ),
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.digitsOnly,
-                        ],
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'Por favor, insira a quantidade em estoque';
+                        }
+                        if (int.tryParse(value) == null) {
+                          return 'Por favor, insira um número válido';
+                        }
+                        if (int.parse(value) < 0) {
+                          return 'A quantidade não pode ser negativa';
+                        }
+                        return null;
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                    TextFormField(
+                      controller: _lowStockController,
+                      decoration: InputDecoration(
+                        labelText: AppLocalizations.of(
+                          context,
+                        )!.lowStockAlertField,
+                        prefixIcon: const Icon(Icons.warning_amber_rounded),
+                        border: const OutlineInputBorder(),
                       ),
-                    ],
-                  ),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              ResponsiveButton(
-                onPressed: _saveProduct,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green[600],
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: Text(
-                  widget.product == null
-                      ? 'Cadastrar Produto'
-                      : 'Atualizar Produto',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+            ),
+            const SizedBox(height: 24),
+            ResponsiveButton(
+              onPressed: _saveProduct,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green[600],
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
                 ),
               ),
+              child: Text(
+                widget.product == null
+                    ? AppLocalizations.of(context)!.registerProductBtn
+                    : AppLocalizations.of(context)!.updateProductBtn,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ],
         ),
       ),
@@ -218,8 +218,8 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         SnackBar(
           content: Text(
             widget.product == null
-                ? 'Produto cadastrado com sucesso!'
-                : 'Produto atualizado com sucesso!',
+                ? AppLocalizations.of(context)!.productCreatedMsg
+                : AppLocalizations.of(context)!.productUpdatedMsg,
           ),
           backgroundColor: Colors.green[600],
         ),

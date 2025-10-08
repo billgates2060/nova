@@ -51,26 +51,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
           },
           selectedItemColor: Colors.blue[600],
           unselectedItemColor: Colors.grey[600],
-          items: const [
+          items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.dashboard),
-              label: 'Início',
+              label: AppLocalizations.of(context)!.homeNav,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2),
-              label: 'Produtos',
+              label: AppLocalizations.of(context)!.productsNav,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.shopping_cart),
-              label: 'Vendas',
+              label: AppLocalizations.of(context)!.salesNav,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.analytics),
-              label: 'Resumo',
+              label: AppLocalizations.of(context)!.summaryNav,
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_alt),
-              label: 'Clientes',
+              label: AppLocalizations.of(context)!.clientsNav,
             ),
           ],
         ),
@@ -86,26 +86,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 });
               },
               labelType: NavigationRailLabelType.none,
-              destinations: const [
+              destinations: [
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard),
-                  label: Text('Início'),
+                  label: Text(AppLocalizations.of(context)!.homeNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.inventory_2),
-                  label: Text('Produtos'),
+                  label: Text(AppLocalizations.of(context)!.productsNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.shopping_cart),
-                  label: Text('Vendas'),
+                  label: Text(AppLocalizations.of(context)!.salesNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.analytics),
-                  label: Text('Resumo'),
+                  label: Text(AppLocalizations.of(context)!.summaryNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.people_alt),
-                  label: Text('Clientes'),
+                  label: Text(AppLocalizations.of(context)!.clientsNav),
                 ),
               ],
             ),
@@ -126,26 +126,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 });
               },
               labelType: NavigationRailLabelType.none,
-              destinations: const [
+              destinations: [
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard),
-                  label: Text('Início'),
+                  label: Text(AppLocalizations.of(context)!.homeNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.inventory_2),
-                  label: Text('Produtos'),
+                  label: Text(AppLocalizations.of(context)!.productsNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.shopping_cart),
-                  label: Text('Vendas'),
+                  label: Text(AppLocalizations.of(context)!.salesNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.analytics),
-                  label: Text('Resumo'),
+                  label: Text(AppLocalizations.of(context)!.summaryNav),
                 ),
                 NavigationRailDestination(
                   icon: Icon(Icons.people_alt),
-                  label: Text('Clientes'),
+                  label: Text(AppLocalizations.of(context)!.clientsNav),
                 ),
               ],
             ),
@@ -353,7 +353,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Resumo de hoje',
+                                AppLocalizations.of(context)!.daySummaryTitle,
                                 style: TextStyle(
                                   color: Colors.white.withOpacity(0.95),
                                   fontWeight: FontWeight.w600,
@@ -366,21 +366,21 @@ class _DashboardHomeState extends State<DashboardHome> {
                                 desktopColumns: 3,
                                 children: [
                                   _buildSummaryCard(
-                                    'Vendas',
+                                    AppLocalizations.of(context)!.salesNav,
                                     '$todaysSalesCount',
                                     Icons.shopping_cart_rounded,
                                     const Color(0xFF10B981),
                                     context,
                                   ),
                                   _buildSummaryCard(
-                                    'Faturamento',
+                                    AppLocalizations.of(context)!.totalSold,
                                     Currency.fcfa(todaysRevenue),
                                     Icons.attach_money_rounded,
                                     const Color(0xFF8B5CF6),
                                     context,
                                   ),
                                   _buildSummaryCard(
-                                    'Produtos',
+                                    AppLocalizations.of(context)!.productsNav,
                                     '$productsCount',
                                     Icons.inventory_2_rounded,
                                     const Color(0xFF3B82F6),
@@ -398,7 +398,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     _DailyGoalProgress(current: todaysSalesCount, goal: 10),
                     const SizedBox(height: 16),
                     Text(
-                      'Estoque Baixo',
+                      AppLocalizations.of(context)!.lowStock,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[800],
@@ -412,7 +412,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     ),
                     const SizedBox(height: 16),
                     _buildActionCard(
-                      'Nova Venda',
+                      AppLocalizations.of(context)!.newSale,
                       Icons.add_shopping_cart_rounded,
                       const Color(0xFF10B981),
                       () {
@@ -430,7 +430,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                       desktopColumns: 3,
                       children: [
                         _buildActionCard(
-                          'Novo Produto',
+                          AppLocalizations.of(context)!.newProduct,
                           Icons.add_box_rounded,
                           const Color(0xFF3B82F6),
                           () {
@@ -443,7 +443,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                           context,
                         ),
                         _buildActionCard(
-                          'Ver Relatórios',
+                          AppLocalizations.of(context)!.viewReports,
                           Icons.analytics_rounded,
                           const Color(0xFF8B5CF6),
                           () {
@@ -456,7 +456,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                           context,
                         ),
                         _buildActionCard(
-                          'Recibos',
+                          AppLocalizations.of(context)!.receipts,
                           Icons.receipt_long_rounded,
                           const Color(0xFFF59E0B),
                           () {
@@ -482,7 +482,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Administração',
+                              AppLocalizations.of(context)!.administration,
                               style: Theme.of(context).textTheme.titleLarge
                                   ?.copyWith(
                                     fontWeight: FontWeight.bold,
@@ -491,7 +491,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                             ),
                             const SizedBox(height: 16),
                             _buildActionCard(
-                              'Gerenciar Lojas',
+                              AppLocalizations.of(context)!.manageStores,
                               Icons.store_rounded,
                               const Color(0xFF8B5CF6),
                               () {
@@ -510,7 +510,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                       },
                     ),
                     Text(
-                      'Vendas Recentes',
+                      AppLocalizations.of(context)!.recentSales,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[800],
@@ -532,9 +532,9 @@ class _DashboardHomeState extends State<DashboardHome> {
                       child: Column(
                         children: [
                           if (recent.isEmpty)
-                            const Padding(
+                            Padding(
                               padding: EdgeInsets.all(16),
-                              child: Text('Sem vendas recentes.'),
+                              child: Text(AppLocalizations.of(context)!.noRecentSales),
                             ),
                           for (final s in recent)
                             _buildRecentSaleItem(
@@ -548,7 +548,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                     ),
                     const SizedBox(height: 24),
                     Text(
-                      'Ações Rápidas',
+                      AppLocalizations.of(context)!.quickActions,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         color: Colors.grey[800],
@@ -560,7 +560,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                         final isWide = constraints.maxWidth > 700;
                         final actions = [
                           _buildActionCard(
-                            'Configurações',
+                            AppLocalizations.of(context)!.settingsLabel,
                             Icons.settings_rounded,
                             const Color(0xFF6B7280),
                             () {

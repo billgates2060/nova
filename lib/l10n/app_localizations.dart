@@ -63,7 +63,8 @@ import 'app_localizations_pt.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -71,7 +72,8 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -83,18 +85,19 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
-    delegate,
-    GlobalMaterialLocalizations.delegate,
-    GlobalCupertinoLocalizations.delegate,
-    GlobalWidgetsLocalizations.delegate,
-  ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('fr'),
-    Locale('pt')
+    Locale('pt'),
   ];
 
   /// No description provided for @appTitle.
@@ -204,9 +207,101 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Notifications'**
   String get notifications;
+
+  // Additional app strings
+  String get today;
+  String get selectedDate;
+  String get daySummaryTitle;
+  String get totalSold;
+  String get productsSold;
+  String get salesCount;
+  String get receiptsHistory;
+  String get filters;
+  String get noSales;
+  String get tapPlusToAddSale;
+  String get quantity;
+  String get client;
+  String get selectClient;
+  String get newSaleTitle;
+  String get updateProducts;
+  String get noClients;
+  String get searchClient;
+  String get newClient;
+  String get name;
+  String get phone;
+  String get save;
+  String get cancel;
+  String get edit;
+  String get delete;
+
+  // Product & navigation texts
+  String get productInfo;
+  String get productNameField;
+  String get skuManualField;
+  String get priceFcfaField;
+  String get stockQtyField;
+  String get lowStockAlertField;
+  String get registerProductBtn;
+  String get updateProductBtn;
+  String get productCreatedMsg;
+  String get productUpdatedMsg;
+  String get updateTooltip;
+  String get searchTooltip;
+  String get searchProductsTitle;
+  String get nameOrCode;
+  String get homeNav;
+  String get productsNav;
+  String get salesNav;
+  String get summaryNav;
+  String get clientsNav;
+  String get noProducts;
+  String get tapPlusToAddProduct;
+  String get confirmDeletion;
+  String get confirmDeleteProductPrompt;
+  String get deletedSuccess;
+
+  // Dashboard & misc
+  String get viewReports;
+  String get receipts;
+  String get administration;
+  String get manageStores;
+  String get recentSales;
+  String get quickActions;
+  String get settingsLabel;
+  String get noRecentSales;
+  String get loadErrorPrefix;
+  String get allGoodNoLowStock;
+  String get priceLabel;
+  String get stockLabel;
+  String get alertLabel;
+  String get lowShort;
+
+  // Clients
+  String get nameOrPhone;
+  String get confirmDeleteClientTitle;
+  String get confirmDeleteClientPrompt;
+  String get errorFillStoreId;
+
+  // Sales / Receipts
+  String get preview;
+  String get printLabel;
+  String get share;
+  String get saveLabel;
+  String get receiptPrintSent;
+  String get receiptSharedSuccess;
+  String get receiptSavedSuccess;
+  String get receiptGeneratedSharedSuccess;
+  String get errorGeneratingReceipt;
+  String get errorProcessingReceipt;
+
+  // Settings (password)
+  String get currentPassword;
+  String get newPasswordLabel;
+  String get saveNewPassword;
 }
 
-class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -215,26 +310,28 @@ class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> 
   }
 
   @override
-  bool isSupported(Locale locale) => <String>['en', 'fr', 'pt'].contains(locale.languageCode);
+  bool isSupported(Locale locale) =>
+      <String>['en', 'fr', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
-
-
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en': return AppLocalizationsEn();
-    case 'fr': return AppLocalizationsFr();
-    case 'pt': return AppLocalizationsPt();
+    case 'en':
+      return AppLocalizationsEn();
+    case 'fr':
+      return AppLocalizationsFr();
+    case 'pt':
+      return AppLocalizationsPt();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.'
+    'that was used.',
   );
 }

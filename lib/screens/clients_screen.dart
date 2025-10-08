@@ -63,7 +63,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _clients.isEmpty
-          ? const Center(child: Text('Nenhum cliente'))
+          ? Center(child: Text(AppLocalizations.of(context)!.noClients))
           : ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _clients.length,
@@ -127,22 +127,22 @@ class _ClientsScreenState extends State<ClientsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Buscar cliente'),
+        title: Text(AppLocalizations.of(context)!.searchClient),
         content: TextField(
           controller: ctrl,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            labelText: 'Nome/Telefone',
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            labelText: AppLocalizations.of(context)!.nameOrPhone,
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Buscar'),
+            child: Text(AppLocalizations.of(context)!.searchClient),
           ),
         ],
       ),
@@ -159,23 +159,23 @@ class _ClientsScreenState extends State<ClientsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Novo Cliente'),
+        title: Text(AppLocalizations.of(context)!.newClient),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.name,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Telefone',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.phone,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -183,11 +183,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salvar'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -204,7 +204,9 @@ class _ClientsScreenState extends State<ClientsScreen> {
       if (resp.statusCode == 201) await _load();
       if (resp.statusCode == 400) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro: preencha loja (storeId)')),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.errorFillStoreId),
+          ),
         );
       }
     }
@@ -218,23 +220,25 @@ class _ClientsScreenState extends State<ClientsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Editar Cliente'),
+        title: Text(
+          '${AppLocalizations.of(context)!.edit} ${AppLocalizations.of(context)!.client}',
+        ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: nameCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Nome',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.name,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: phoneCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Telefone',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: AppLocalizations.of(context)!.phone,
+                border: const OutlineInputBorder(),
               ),
             ),
           ],
@@ -242,11 +246,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Salvar'),
+            child: Text(AppLocalizations.of(context)!.save),
           ),
         ],
       ),
@@ -264,16 +268,18 @@ class _ClientsScreenState extends State<ClientsScreen> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Excluir Cliente'),
-        content: Text('Tem certeza que deseja excluir "${c['name']}"?'),
+        title: Text(AppLocalizations.of(context)!.confirmDeleteClientTitle),
+        content: Text(
+          '${AppLocalizations.of(context)!.confirmDeleteClientPrompt} "${c['name']}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Excluir'),
+            child: Text(AppLocalizations.of(context)!.delete),
           ),
         ],
       ),
