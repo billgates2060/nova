@@ -63,8 +63,7 @@ import 'app_localizations_pt.dart';
 /// be consistent with the languages listed in the AppLocalizations.supportedLocales
 /// property.
 abstract class AppLocalizations {
-  AppLocalizations(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+  AppLocalizations(String locale) : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -72,8 +71,7 @@ abstract class AppLocalizations {
     return Localizations.of<AppLocalizations>(context, AppLocalizations);
   }
 
-  static const LocalizationsDelegate<AppLocalizations> delegate =
-      _AppLocalizationsDelegate();
+  static const LocalizationsDelegate<AppLocalizations> delegate = _AppLocalizationsDelegate();
 
   /// A list of this localizations delegate along with the default localizations
   /// delegates.
@@ -85,19 +83,18 @@ abstract class AppLocalizations {
   /// Additional delegates can be added by appending to this list in
   /// MaterialApp. This list does not have to be used at all if a custom list
   /// of delegates is preferred or required.
-  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
-      <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates = <LocalizationsDelegate<dynamic>>[
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
     Locale('en'),
     Locale('fr'),
-    Locale('pt'),
+    Locale('pt')
   ];
 
   /// No description provided for @appTitle.
@@ -208,119 +205,116 @@ abstract class AppLocalizations {
   /// **'Notifications'**
   String get notifications;
 
-  // Additional app strings
-  String get today;
-  String get selectedDate;
-  String get daySummaryTitle;
-  String get totalSold;
-  String get productsSold;
-  String get salesCount;
-  String get receiptsHistory;
-  String get filters;
-  String get noSales;
-  String get tapPlusToAddSale;
-  String get quantity;
+  /// No description provided for @product.
+  ///
+  /// In en, this message translates to:
+  /// **'Product'**
+  String get product;
+
+  /// No description provided for @client.
+  ///
+  /// In en, this message translates to:
+  /// **'Client'**
   String get client;
+
+  /// No description provided for @selectClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Client'**
   String get selectClient;
+
+  /// No description provided for @quantity.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity'**
+  String get quantity;
+
+  /// No description provided for @unitPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Unit Price'**
+  String get unitPrice;
+
+  /// No description provided for @totalPrice.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Price'**
+  String get totalPrice;
+
+  /// No description provided for @discountPercent.
+  ///
+  /// In en, this message translates to:
+  /// **'Discount (%)'**
+  String get discountPercent;
+
+  /// No description provided for @discountFixed.
+  ///
+  /// In en, this message translates to:
+  /// **'Fixed Discount (FCFA)'**
+  String get discountFixed;
+
+  /// No description provided for @newSaleTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'New Sale'**
   String get newSaleTitle;
-  String get updateProducts;
-  String get noClients;
-  String get searchClient;
-  String get newClient;
-  String get name;
-  String get phone;
-  String get save;
-  String get cancel;
-  String get edit;
-  String get delete;
 
-  // Product & navigation texts
-  String get productInfo;
-  String get productNameField;
-  String get skuManualField;
-  String get priceFcfaField;
-  String get stockQtyField;
-  String get lowStockAlertField;
-  String get registerProductBtn;
-  String get updateProductBtn;
-  String get productCreatedMsg;
-  String get productUpdatedMsg;
-  String get updateTooltip;
-  String get searchTooltip;
-  String get searchProductsTitle;
-  String get nameOrCode;
-  String get homeNav;
-  String get productsNav;
-  String get salesNav;
-  String get summaryNav;
-  String get clientsNav;
-  String get noProducts;
-  String get tapPlusToAddProduct;
-  String get confirmDeletion;
-  String get confirmDeleteProductPrompt;
-  String get deletedSuccess;
+  /// No description provided for @selectProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Product'**
+  String get selectProduct;
 
-  // Dashboard & misc
-  String get viewReports;
-  String get receipts;
-  String get administration;
-  String get manageStores;
-  String get recentSales;
-  String get quickActions;
-  String get settingsLabel;
-  String get noRecentSales;
-  String get loadErrorPrefix;
-  String get allGoodNoLowStock;
-  String get priceLabel;
-  String get stockLabel;
-  String get alertLabel;
-  String get lowShort;
+  /// No description provided for @stockExceeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Quantity greater than available stock'**
+  String get stockExceeded;
 
-  // Clients
-  String get nameOrPhone;
-  String get confirmDeleteClientTitle;
-  String get confirmDeleteClientPrompt;
-  String get errorFillStoreId;
+  /// No description provided for @pleaseSelectProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select a product'**
+  String get pleaseSelectProduct;
 
-  // Sales / Receipts
-  String get preview;
-  String get printLabel;
-  String get share;
-  String get saveLabel;
-  String get receiptPrintSent;
-  String get receiptSharedSuccess;
-  String get receiptSavedSuccess;
-  String get receiptGeneratedSharedSuccess;
-  String get errorGeneratingReceipt;
-  String get errorProcessingReceipt;
+  /// No description provided for @saleSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale saved successfully!'**
+  String get saleSaved;
 
-  // Settings (password)
-  String get currentPassword;
-  String get newPasswordLabel;
-  String get saveNewPassword;
+  /// No description provided for @saleSavedOffline.
+  ///
+  /// In en, this message translates to:
+  /// **'Sale saved locally. Will be synced when connection returns.'**
+  String get saleSavedOffline;
 
-  // Settings (language & accessibility)
-  String get language;
-  String get appLanguageLabel;
-  String get systemOption;
-  String get portuguese;
-  String get englishLabel;
-  String get frenchLabel;
-  String get accessibility;
-  String get fontSizeNormal;
-  String get fontSizeLarge;
-  String get fontSizeExtra;
-  String get security;
-  String get changePasswordTitle;
+  /// No description provided for @syncError.
+  ///
+  /// In en, this message translates to:
+  /// **'Error syncing data'**
+  String get syncError;
 
-  // Receipts/messages
-  String get errorLoadingReceipts;
-  String get receiptPrefix;
-  String get shareReceiptTextPrefix;
+  /// No description provided for @offlineMode.
+  ///
+  /// In en, this message translates to:
+  /// **'Offline mode - local data'**
+  String get offlineMode;
+
+  /// No description provided for @syncData.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync data'**
+  String get syncData;
+
+  /// No description provided for @tryAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Try again'**
+  String get tryAgain;
 }
 
-class _AppLocalizationsDelegate
-    extends LocalizationsDelegate<AppLocalizations> {
+class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
   const _AppLocalizationsDelegate();
 
   @override
@@ -329,28 +323,26 @@ class _AppLocalizationsDelegate
   }
 
   @override
-  bool isSupported(Locale locale) =>
-      <String>['en', 'fr', 'pt'].contains(locale.languageCode);
+  bool isSupported(Locale locale) => <String>['en', 'fr', 'pt'].contains(locale.languageCode);
 
   @override
   bool shouldReload(_AppLocalizationsDelegate old) => false;
 }
 
 AppLocalizations lookupAppLocalizations(Locale locale) {
+
+
   // Lookup logic when only language code is specified.
   switch (locale.languageCode) {
-    case 'en':
-      return AppLocalizationsEn();
-    case 'fr':
-      return AppLocalizationsFr();
-    case 'pt':
-      return AppLocalizationsPt();
+    case 'en': return AppLocalizationsEn();
+    case 'fr': return AppLocalizationsFr();
+    case 'pt': return AppLocalizationsPt();
   }
 
   throw FlutterError(
     'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
     'an issue with the localizations generation tool. Please file an issue '
     'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
+    'that was used.'
   );
 }

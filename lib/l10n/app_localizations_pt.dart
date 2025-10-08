@@ -62,200 +62,57 @@ class AppLocalizationsPt extends AppLocalizations {
   @override
   String get notifications => 'Notificações';
 
-  // Added strings
   @override
-  String get today => 'Hoje';
-  @override
-  String get selectedDate => 'Data Selecionada';
-  @override
-  String get daySummaryTitle => 'Resumo do Dia';
-  @override
-  String get totalSold => 'Total Vendido';
-  @override
-  String get productsSold => 'Produtos Vendidos';
-  @override
-  String get salesCount => 'Vendas';
-  @override
-  String get receiptsHistory => 'Histórico de Recibos';
-  @override
-  String get filters => 'Filtros';
-  @override
-  String get noSales => 'Nenhuma venda registrada';
-  @override
-  String get tapPlusToAddSale => 'Toque no + para registrar sua primeira venda';
-  @override
-  String get quantity => 'Quantidade';
+  String get product => 'Produto';
+
   @override
   String get client => 'Cliente';
+
   @override
-  String get selectClient => 'Selecionar cliente';
+  String get selectClient => 'Selecionar Cliente';
+
+  @override
+  String get quantity => 'Quantidade';
+
+  @override
+  String get unitPrice => 'Preço Unitário';
+
+  @override
+  String get totalPrice => 'Preço Total';
+
+  @override
+  String get discountPercent => 'Desconto (%)';
+
+  @override
+  String get discountFixed => 'Desconto Fixo (FCFA)';
+
   @override
   String get newSaleTitle => 'Nova Venda';
-  @override
-  String get updateProducts => 'Atualizar produtos';
-  @override
-  String get noClients => 'Nenhum cliente';
-  @override
-  String get searchClient => 'Buscar cliente';
-  @override
-  String get newClient => 'Novo Cliente';
-  @override
-  String get name => 'Nome';
-  @override
-  String get phone => 'Telefone';
-  @override
-  String get save => 'Salvar';
-  @override
-  String get cancel => 'Cancelar';
-  @override
-  String get edit => 'Editar';
-  @override
-  String get delete => 'Excluir';
-  @override
-  String get productInfo => 'Informações do Produto';
-  @override
-  String get productNameField => 'Nome do Produto';
-  @override
-  String get skuManualField => 'Código (SKU manual)';
-  @override
-  String get priceFcfaField => 'Preço (FCFA)';
-  @override
-  String get stockQtyField => 'Quantidade em Estoque';
-  @override
-  String get lowStockAlertField => 'Alerta de estoque baixo (unidades)';
-  @override
-  String get registerProductBtn => 'Cadastrar Produto';
-  @override
-  String get updateProductBtn => 'Atualizar Produto';
-  @override
-  String get productCreatedMsg => 'Produto cadastrado com sucesso!';
-  @override
-  String get productUpdatedMsg => 'Produto atualizado com sucesso!';
-  @override
-  String get updateTooltip => 'Atualizar';
-  @override
-  String get searchTooltip => 'Buscar';
-  @override
-  String get searchProductsTitle => 'Buscar produtos';
-  @override
-  String get nameOrCode => 'Nome ou código';
-  @override
-  String get homeNav => 'Início';
-  @override
-  String get productsNav => 'Produtos';
-  @override
-  String get salesNav => 'Vendas';
-  @override
-  String get summaryNav => 'Resumo';
-  @override
-  String get clientsNav => 'Clientes';
-  @override
-  String get noProducts => 'Nenhum produto cadastrado';
-  @override
-  String get tapPlusToAddProduct =>
-      'Toque no + para adicionar seu primeiro produto';
-  @override
-  String get confirmDeletion => 'Confirmar Exclusão';
-  @override
-  String get confirmDeleteProductPrompt =>
-      'Tem certeza que deseja excluir o produto';
-  @override
-  String get deletedSuccess => 'Produto excluído com sucesso!';
-  @override
-  String get viewReports => 'Ver Relatórios';
-  @override
-  String get receipts => 'Recibos';
-  @override
-  String get administration => 'Administração';
-  @override
-  String get manageStores => 'Gerenciar Lojas';
-  @override
-  String get recentSales => 'Vendas Recentes';
-  @override
-  String get quickActions => 'Ações Rápidas';
-  @override
-  String get settingsLabel => 'Configurações';
-  @override
-  String get noRecentSales => 'Sem vendas recentes.';
-  @override
-  String get loadErrorPrefix => 'Erro ao carregar:';
-  @override
-  String get allGoodNoLowStock => 'Tudo certo! Nenhum item com estoque baixo.';
-  @override
-  String get priceLabel => 'Preço';
-  @override
-  String get stockLabel => 'Estoque';
-  @override
-  String get alertLabel => 'Alerta';
-  @override
-  String get lowShort => 'Baixo';
-  @override
-  String get nameOrPhone => 'Nome/Telefone';
-  @override
-  String get confirmDeleteClientTitle => 'Excluir Cliente';
-  @override
-  String get confirmDeleteClientPrompt => 'Tem certeza que deseja excluir';
-  @override
-  String get errorFillStoreId => 'Erro: preencha loja (storeId)';
-  @override
-  String get preview => 'Visualizar';
-  @override
-  String get printLabel => 'Imprimir';
-  @override
-  String get share => 'Compartilhar';
-  @override
-  String get saveLabel => 'Salvar';
-  @override
-  String get receiptPrintSent => 'Recibo enviado para impressão!';
-  @override
-  String get receiptSharedSuccess => 'Recibo compartilhado com sucesso!';
-  @override
-  String get receiptSavedSuccess => 'Recibo salvo com sucesso!';
-  @override
-  String get receiptGeneratedSharedSuccess =>
-      'Recibo gerado e compartilhado com sucesso!';
-  @override
-  String get errorGeneratingReceipt => 'Erro ao gerar recibo:';
-  @override
-  String get errorProcessingReceipt => 'Erro ao processar recibo:';
-  @override
-  String get currentPassword => 'Senha atual';
-  @override
-  String get newPasswordLabel => 'Nova senha';
-  @override
-  String get saveNewPassword => 'Salvar nova senha';
 
-  // Settings (language & accessibility)
   @override
-  String get language => 'Idioma';
-  @override
-  String get appLanguageLabel => 'Idioma do aplicativo';
-  @override
-  String get systemOption => 'Sistema';
-  @override
-  String get portuguese => 'Português';
-  @override
-  String get englishLabel => 'English';
-  @override
-  String get frenchLabel => 'Français';
-  @override
-  String get accessibility => 'Acessibilidade';
-  @override
-  String get fontSizeNormal => 'Normal';
-  @override
-  String get fontSizeLarge => 'Grande';
-  @override
-  String get fontSizeExtra => 'Extra';
-  @override
-  String get security => 'Segurança';
-  @override
-  String get changePasswordTitle => 'Alterar senha';
+  String get selectProduct => 'Selecionar Produto';
 
-  // Receipts/messages
   @override
-  String get errorLoadingReceipts => 'Erro ao carregar recibos';
+  String get stockExceeded => 'Quantidade maior que o estoque disponível';
+
   @override
-  String get receiptPrefix => 'Recibo';
+  String get pleaseSelectProduct => 'Por favor, selecione um produto';
+
   @override
-  String get shareReceiptTextPrefix => 'Recibo da venda #';
+  String get saleSaved => 'Venda salva com sucesso!';
+
+  @override
+  String get saleSavedOffline => 'Venda salva localmente. Será sincronizada quando a conexão voltar.';
+
+  @override
+  String get syncError => 'Erro ao sincronizar dados';
+
+  @override
+  String get offlineMode => 'Modo offline - dados locais';
+
+  @override
+  String get syncData => 'Sincronizar dados';
+
+  @override
+  String get tryAgain => 'Tentar novamente';
 }
