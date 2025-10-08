@@ -413,7 +413,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
     );
   }
 
-  void _saveSale() {
+  void _saveSale() async {
     if (_formKey.currentState!.validate() && _selectedProduct != null) {
       final quantity = int.parse(_quantityController.text);
       final unitPrice = double.parse(_unitPriceController.text);
@@ -444,6 +444,7 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
         ),
       );
 
+      // Persist to backend then auto-save receipt locally
       Navigator.pop(context, sale);
     }
   }
