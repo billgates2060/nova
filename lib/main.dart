@@ -7,6 +7,7 @@ import 'screens/welcome_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:nova/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,8 +16,49 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  static _MyAppState? of(BuildContext context) =>
+      context.findAncestorStateOfType<_MyAppState>();
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  Locale? _locale;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadLocale();
+  }
+
+  Future<void> _loadLocale() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString('app_locale_code');
+    if (code == null || code.isEmpty || code == 'system') {
+      setState(() => _locale = null);
+    } else {
+      setState(() => _locale = Locale(code));
+    }
+  }
+
+  Future<void> setLocale(String? code) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (code == null || code.isEmpty || code == 'system') {
+      await prefs.setString('app_locale_code', 'system');
+      setState(() => _locale = null);
+    } else {
+      await prefs.setString('app_locale_code', code);
+      setState(() => _locale = Locale(code));
+    }
+  }
+
+  String currentLocaleCode() {
+    return _locale?.languageCode ?? 'system';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +74,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'NOVA - Gestão de Vendas',
       themeMode: ThemeMode.system,
+      locale: _locale,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: light,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:nova/l10n/app_localizations.dart';
+import '../main.dart';
 import '../services/auth_service.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -48,6 +49,37 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const Text(
+            'Idioma',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              const Icon(Icons.language),
+              const SizedBox(width: 12),
+              Expanded(
+                child: DropdownButtonFormField<String>(
+                  value: MyApp.of(context)?.currentLocaleCode(),
+                  decoration: const InputDecoration(
+                    border: OutlineInputBorder(),
+                    labelText: 'Idioma do aplicativo',
+                  ),
+                  items: const [
+                    DropdownMenuItem(value: 'system', child: Text('Sistema')),
+                    DropdownMenuItem(value: 'pt', child: Text('Português')),
+                    DropdownMenuItem(value: 'en', child: Text('English')),
+                    DropdownMenuItem(value: 'fr', child: Text('Français')),
+                  ],
+                  onChanged: (code) {
+                    final app = MyApp.of(context);
+                    app?.setLocale(code);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           // Acessibilidade: tamanho da fonte
           const Text(
             'Acessibilidade',
