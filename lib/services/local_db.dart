@@ -86,6 +86,21 @@ class LocalDb {
           );
         ''');
         await db.execute('''
+          CREATE TABLE IF NOT EXISTS users_local (
+            id INTEGER PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            role TEXT NOT NULL,
+            status TEXT NOT NULL,
+            store_id TEXT,
+            store_name TEXT,
+            blocked_until TEXT,
+            created_at TEXT NOT NULL,
+            synced INTEGER DEFAULT 0,
+            updated_at INTEGER NOT NULL
+          );
+        ''');
+        await db.execute('''
           CREATE TABLE IF NOT EXISTS ops_queue (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             entity TEXT NOT NULL,

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
+import '../repositories/users_repository.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 
 class AdminUsersScreen extends StatefulWidget {
   final StoreInfo? selectedStore;
@@ -13,6 +15,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   bool _loading = true;
   List<Map<String, dynamic>> _users = const [];
   String _query = '';
+  bool _isOfflineMode = false;
+  final _usersRepo = UsersRepository();
 
   @override
   void initState() {
@@ -21,19 +25,106 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
-    if (widget.selectedStore != null) {
-      final users = await AdminService.getStoreUsers(widget.selectedStore!.storeId);
+    setState(() {
+      _loading = true;
+      _isOfflineMode = false;
+    });
+
+    // Primeiro: carregar dados locais
+    try {
+      final localUsers = await _usersRepo.getLocalUsers();
+      
+        setState(() {
+        _users = localUsers;
+        _isOfflineMode = true;
+          _loading = false;
+        });
+      
+      if (localUsers.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.info, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Nenhum usuário encontrado localmente'),
+              ],
+            ),
+            backgroundColor: Colors.blue,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+      
+    } catch (localError) {
+      if (kDebugMode) {
+        print('❌ Erro ao carregar usuários locais: $localError');
+      }
+      
       setState(() {
-        _users = users;
+        _users = [];
+        _isOfflineMode = true;
         _loading = false;
       });
-    } else {
-      final users = await AdminService.listUsers();
-      setState(() {
-        _users = users;
-        _loading = false;
-      });
+    }
+
+    // Segundo: tentar sincronizar com backend
+    try {
+      List<Map<String, dynamic>> remoteUsers;
+      
+      if (widget.selectedStore != null) {
+        remoteUsers = await AdminService.getStoreUsers(widget.selectedStore!.storeId);
+      } else {
+        remoteUsers = await AdminService.listUsers();
+      }
+      
+      if (remoteUsers.isNotEmpty) {
+        setState(() {
+          _users = remoteUsers;
+          _isOfflineMode = false;
+        });
+        
+        // Sincronizar dados locais
+        await _usersRepo.syncFromRemote();
+        
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  Icon(Icons.sync, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Usuários sincronizados com sucesso'),
+                ],
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Erro ao sincronizar usuários: $e');
+      }
+      
+      // Não mostrar erro se já temos dados locais
+      if (_users.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Row(
+              children: [
+                Icon(Icons.wifi_off, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Modo offline - dados locais'),
+              ],
+            ),
+            backgroundColor: Colors.orange,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
     }
   }
 
@@ -51,11 +142,30 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           onChanged: (v) => setState(() => _query = v),
         ),
         actions: [
+          // Indicador de status offline
+          if (_isOfflineMode)
+          IconButton(
+              icon: const Icon(Icons.wifi_off, color: Colors.orange),
+              onPressed: () {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Modo offline - dados locais'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              },
+              tooltip: 'Modo offline',
+          ),
+          IconButton(
+            icon: const Icon(Icons.sync),
+            onPressed: _load,
+            tooltip: 'Sincronizar',
+          ),
           if (_query.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.clear),
               onPressed: () => setState(() => _query = ''),
-            ),
+          ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
@@ -195,7 +305,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
         title: const Text('Criar conta (cada usuário é uma loja)'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
+      children: [
             TextField(decoration: const InputDecoration(labelText: 'Nome'), controller: nameCtrl),
             TextField(decoration: const InputDecoration(labelText: 'Email'), controller: emailCtrl),
             TextField(decoration: const InputDecoration(labelText: 'Senha'), controller: passCtrl, obscureText: true),
@@ -215,18 +325,47 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           ElevatedButton(
             onPressed: () async {
               try {
-                final created = await AdminService.createStoreUser(
-                  storeId: '',
-                  name: nameCtrl.text.trim(),
-                  email: emailCtrl.text.trim(),
-                  password: passCtrl.text,
-                  role: role,
-                );
-                if (created.isNotEmpty) {
-                  if (context.mounted) Navigator.pop(ctx);
+                final userData = {
+                  'name': nameCtrl.text.trim(),
+                  'email': emailCtrl.text.trim(),
+                  'password': passCtrl.text,
+                  'role': role,
+                };
+                
+                await _usersRepo.createUser(userData);
+                
+                if (context.mounted) {
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Row(
+              children: [
+                          Icon(Icons.check_circle, color: Colors.white),
+                          SizedBox(width: 8),
+                          Text('Usuário criado com sucesso'),
+                        ],
+                      ),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
                   await _load();
                 }
-              } catch (_) {}
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Row(
+                        children: [
+                          const Icon(Icons.error, color: Colors.white),
+                          const SizedBox(width: 8),
+                          Expanded(child: Text('Erro ao criar usuário: $e')),
+                        ],
+                      ),
+                      backgroundColor: Colors.red,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Criar'),
           ),

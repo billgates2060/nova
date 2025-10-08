@@ -4,7 +4,6 @@ import '../services/api_client.dart';
 import 'package:nova/l10n/app_localizations.dart';
 import '../services/reports/receipt_pdf.dart';
 import '../services/print_service.dart';
-import 'dart:convert';
 import 'sale_form_screen.dart';
 import '../services/sync_service.dart';
 import '../repositories/sales_repository.dart';
@@ -24,8 +23,6 @@ class SalesScreen extends StatefulWidget {
 class _SalesScreenState extends State<SalesScreen> {
   List<Sale> _sales = [];
   bool _isLoading = true;
-  bool _isOfflineMode = false;
-  String? _lastError;
   final _salesRepo = SalesRepository();
 
   @override
@@ -38,82 +35,112 @@ class _SalesScreenState extends State<SalesScreen> {
     if (!mounted) return;
     setState(() {
       _isLoading = true;
-      _lastError = null;
     });
 
+    // Primeiro: carregar dados locais (sempre funciona)
     try {
-      // Tentar carregar do backend primeiro
+      final localSales = await _salesRepo.getLocalSales();
+      
+      if (!mounted) return;
+      setState(() {
+        _sales = localSales;
+        _isLoading = false;
+      });
+      
+      // Mostrar aviso de modo offline se não há dados locais
+      if (localSales.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Row(
+              children: [
+                Icon(Icons.info, color: Colors.white),
+                SizedBox(width: 8),
+                Text('Nenhuma venda encontrada localmente'),
+              ],
+            ),
+            backgroundColor: Colors.blue[600],
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+      
+    } catch (localError) {
+      if (kDebugMode) {
+        print('❌ Erro ao carregar vendas locais: $localError');
+      }
+      
+      if (!mounted) return;
+      setState(() {
+        _sales = [];
+        _isLoading = false;
+      });
+    }
+
+    // Segundo: tentar sincronizar com backend em background
+    try {
       final remoteSales = await RetryService.networkRetry(
         () => _salesRepo.getRemoteSales(),
         operationName: 'carregar_vendas_backend',
       );
       
       if (!mounted) return;
-      setState(() {
-        _sales = remoteSales;
-        _isOfflineMode = false;
-        _isLoading = false;
-      });
       
-      // Sincronizar dados locais em background
-      _salesRepo.syncFromRemote();
-      
-    } catch (e) {
-      if (kDebugMode) {
-        print('❌ Erro ao carregar vendas do backend: $e');
-      }
-      
-      // Fallback: carregar do banco local
-      try {
-        final localSales = await _salesRepo.getLocalSales();
-        
-        if (!mounted) return;
+      // Se conseguiu carregar do backend, atualizar a lista
+      if (remoteSales.isNotEmpty) {
         setState(() {
-          _sales = localSales;
-          _isOfflineMode = true;
-          _isLoading = false;
-          _lastError = 'Modo offline - dados locais';
+          _sales = remoteSales;
         });
         
-        // Mostrar aviso de modo offline
+        // Sincronizar dados locais
+        _salesRepo.syncFromRemote();
+        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Row(
+              content: const Row(
                 children: [
-                  const Icon(Icons.wifi_off, color: Colors.white),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Modo offline - dados locais',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
+                  Icon(Icons.sync, color: Colors.white),
+                  SizedBox(width: 8),
+                  Text('Dados sincronizados com sucesso'),
                 ],
               ),
-              backgroundColor: Colors.orange[600],
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'Tentar novamente',
-                textColor: Colors.white,
-                onPressed: () => _loadSales(),
-              ),
+              backgroundColor: Colors.green[600],
+              duration: const Duration(seconds: 2),
             ),
           );
         }
-        
-      } catch (localError) {
-        if (kDebugMode) {
-          print('❌ Erro ao carregar vendas locais: $localError');
-        }
-        
-        if (!mounted) return;
-        setState(() {
-          _sales = [];
-          _isOfflineMode = true;
-          _isLoading = false;
-          _lastError = 'Erro ao carregar dados: $localError';
-        });
+      }
+      
+    } catch (e) {
+      if (kDebugMode) {
+        print('❌ Erro ao sincronizar com backend: $e');
+      }
+      
+      // Não mostrar erro se já temos dados locais
+      if (_sales.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.wifi_off, color: Colors.white),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Modo offline - dados locais',
+                    style: const TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.orange[600],
+            duration: const Duration(seconds: 3),
+            action: SnackBarAction(
+              label: 'Tentar novamente',
+              textColor: Colors.white,
+              onPressed: () => _loadSales(),
+            ),
+          ),
+        );
       }
     }
   }

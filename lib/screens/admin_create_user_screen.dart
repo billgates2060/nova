@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/api_client.dart';
 import '../services/admin_service.dart';
+import '../repositories/users_repository.dart';
 
 class AdminCreateUserScreen extends StatefulWidget {
   final StoreInfo? selectedStore;
@@ -18,6 +18,7 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
   DateTime? _blockedUntil;
   String _role = 'user';
   bool _submitting = false;
+  final _usersRepo = UsersRepository();
 
   Future<void> _createUser() async {
     final String email = _emailController.text.trim();
@@ -49,23 +50,52 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
       if (_blockedUntil != null)
         'blockedUntil': _blockedUntil!.toIso8601String(),
     };
-    final resp = await ApiClient.post('/users', body, auth: true);
-    setState(() {
-      _submitting = false;
-    });
-    if (!mounted) return;
-    if (resp.statusCode == 201) {
+    try {
+      await _usersRepo.createUser(body);
+      
+      setState(() {
+        _submitting = false;
+      });
+      
+      if (!mounted) return;
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuário criado com sucesso')),
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.check_circle, color: Colors.white),
+              SizedBox(width: 8),
+              Text('Usuário criado com sucesso'),
+            ],
+          ),
+          backgroundColor: Colors.green,
+        ),
       );
       Navigator.of(context).pop(true);
-    } else {
-      final message = resp.body.isNotEmpty
-          ? resp.body
-          : 'Erro ao criar usuário';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(message)));
+      
+    } catch (e) {
+      setState(() {
+        _submitting = false;
+      });
+      
+      if (!mounted) return;
+      
+      final message = e.toString().contains('email_exists') 
+          ? 'Email já existe'
+          : 'Erro ao criar usuário: $e';
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.error, color: Colors.white),
+              const SizedBox(width: 8),
+              Expanded(child: Text(message)),
+            ],
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 

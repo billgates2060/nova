@@ -4,6 +4,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import '../repositories/products_repository.dart';
 import '../repositories/sales_repository.dart';
 import '../repositories/clients_repository.dart';
+import '../repositories/users_repository.dart';
 import '../services/retry_service.dart';
 
 class SyncService {
@@ -19,6 +20,7 @@ class SyncService {
   final _productsRepo = ProductsRepository();
   final _salesRepo = SalesRepository();
   final _clientsRepo = ClientsRepository();
+  final _usersRepo = UsersRepository();
 
   void start() {
     _sub ??= _connectivity.onConnectivityChanged.listen((_) => sync());
@@ -44,6 +46,9 @@ class SyncService {
           // Sincronizar clientes
           await _clientsRepo.syncPendingClients();
           await _clientsRepo.syncFromRemote();
+          
+          // Sincronizar usuários
+          await _usersRepo.syncFromRemote();
         },
         operationName: 'sincronizacao_completa',
       );
