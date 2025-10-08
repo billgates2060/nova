@@ -364,6 +364,7 @@ class _SalesScreenState extends State<SalesScreen> {
         'product_name': result.productName,
         'quantity': result.quantity,
         'unit_price': result.unitPrice,
+        'total_price': result.totalPrice,
         'sale_date': result.saleDate.toIso8601String(),
         if (result.clientId != null) 'client_id': result.clientId,
       }, auth: true);

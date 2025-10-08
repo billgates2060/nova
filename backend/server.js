@@ -488,11 +488,13 @@ app.get('/sales', auth, ensureActiveUser, async (req, res) => {
 
 app.post('/sales', auth, ensureActiveUser, async (req, res) => {
   try {
-    const { product_id, product_name, quantity, unit_price, sale_date, client_id } = req.body;
+    const { product_id, product_name, quantity, unit_price, sale_date, client_id, total_price: totalPriceOverride } = req.body;
     if (!product_id || !product_name || !quantity || unit_price == null || !sale_date) {
       return res.status(400).json({ error: 'missing fields' });
     }
-    const total_price = Number(unit_price) * Number(quantity);
+    const total_price = (totalPriceOverride != null && !Number.isNaN(Number(totalPriceOverride)))
+      ? Number(totalPriceOverride)
+      : Number(unit_price) * Number(quantity);
     const db = await dbPromise;
     const result = await db.run(
       `INSERT INTO sales (product_id, product_name, quantity, unit_price, total_price, sale_date, client_id, store_id, account_id)

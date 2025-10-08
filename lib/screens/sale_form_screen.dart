@@ -417,7 +417,9 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
     if (_formKey.currentState!.validate() && _selectedProduct != null) {
       final quantity = int.parse(_quantityController.text);
       final unitPrice = double.parse(_unitPriceController.text);
-      final totalPrice = quantity * unitPrice;
+      var totalPrice = quantity * unitPrice;
+      if (_discountPercent > 0) totalPrice *= (1 - _discountPercent / 100);
+      if (_discountFixed > 0) totalPrice = (totalPrice - _discountFixed).clamp(0, double.infinity);
 
       final sale = Sale(
         productId: _selectedProduct!.id!,
