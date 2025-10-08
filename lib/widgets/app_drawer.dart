@@ -5,7 +5,7 @@ import '../screens/products_screen.dart';
 import '../screens/sales_screen.dart';
 import '../screens/clients_screen.dart';
 import '../screens/daily_summary_screen.dart';
-import '../screens/admin_users_screen.dart';
+import '../screens/admin_dashboard_screen.dart';
 import '../screens/welcome_screen.dart';
 
 class AppDrawer extends StatelessWidget {
@@ -83,12 +83,12 @@ class AppDrawer extends StatelessWidget {
                 if (snap.data == 'admin') {
                   return ListTile(
                     leading: const Icon(Icons.admin_panel_settings),
-                    title: Text(AppLocalizations.of(context)!.adminManagement),
+                    title: Text(AppLocalizations.of(context)!.administration),
                     onTap: () {
                       Navigator.pop(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (_) => const AdminUsersScreen(),
+                          builder: (_) => const AdminDashboardScreen(),
                         ),
                       );
                     },
