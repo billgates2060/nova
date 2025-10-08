@@ -369,12 +369,12 @@ class _SalesScreenState extends State<SalesScreen> {
       }, auth: true);
       await _loadSales();
 
-      // Gerar e compartilhar recibo automaticamente
-      await _generateAndShareReceipt(result);
+      // Gerar, compartilhar e salvar recibo automaticamente
+      await _generateAndShareAndSaveReceipt(result);
     }
   }
 
-  Future<void> _generateAndShareReceipt(Sale sale) async {
+  Future<void> _generateAndShareAndSaveReceipt(Sale sale) async {
     try {
       final config = await PrintService.getDefaultConfig();
       final receiptData = PrintService.createSaleReceipt(
@@ -394,8 +394,8 @@ class _SalesScreenState extends State<SalesScreen> {
             ? ReceiptClient(name: sale.clientName)
             : null,
       );
-
       await PrintService.shareReceipt(receiptData: receiptData, config: config);
+      await PrintService.saveReceipt(receiptData: receiptData, config: config);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
