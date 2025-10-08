@@ -312,6 +312,522 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Try again'**
   String get tryAgain;
+
+  /// No description provided for @homeNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get homeNav;
+
+  /// No description provided for @productsNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Products'**
+  String get productsNav;
+
+  /// No description provided for @salesNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales'**
+  String get salesNav;
+
+  /// No description provided for @summaryNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Summary'**
+  String get summaryNav;
+
+  /// No description provided for @clientsNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Clients'**
+  String get clientsNav;
+
+  /// No description provided for @daySummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily Summary'**
+  String get daySummaryTitle;
+
+  /// No description provided for @totalSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Sold'**
+  String get totalSold;
+
+  /// No description provided for @viewReports.
+  ///
+  /// In en, this message translates to:
+  /// **'View Reports'**
+  String get viewReports;
+
+  /// No description provided for @receipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipts'**
+  String get receipts;
+
+  /// No description provided for @administration.
+  ///
+  /// In en, this message translates to:
+  /// **'Administration'**
+  String get administration;
+
+  /// No description provided for @manageStores.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Stores'**
+  String get manageStores;
+
+  /// No description provided for @recentSales.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Sales'**
+  String get recentSales;
+
+  /// No description provided for @noRecentSales.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent sales'**
+  String get noRecentSales;
+
+  /// No description provided for @quickActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Quick Actions'**
+  String get quickActions;
+
+  /// No description provided for @settingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsLabel;
+
+  /// No description provided for @updateTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get updateTooltip;
+
+  /// No description provided for @searchTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get searchTooltip;
+
+  /// No description provided for @searchProductsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Products'**
+  String get searchProductsTitle;
+
+  /// No description provided for @nameOrCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Name or code'**
+  String get nameOrCode;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @priceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get priceLabel;
+
+  /// No description provided for @stockLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock'**
+  String get stockLabel;
+
+  /// No description provided for @lowShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get lowShort;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @noProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'No products'**
+  String get noProducts;
+
+  /// No description provided for @tapPlusToAddProduct.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap + to add product'**
+  String get tapPlusToAddProduct;
+
+  /// No description provided for @receiptsHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipts History'**
+  String get receiptsHistory;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @today.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get today;
+
+  /// No description provided for @preview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get preview;
+
+  /// No description provided for @printLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Print'**
+  String get printLabel;
+
+  /// No description provided for @share.
+  ///
+  /// In en, this message translates to:
+  /// **'Share'**
+  String get share;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveLabel;
+
+  /// No description provided for @receiptGeneratedSharedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt generated, shared and saved successfully!'**
+  String get receiptGeneratedSharedSuccess;
+
+  /// No description provided for @errorGeneratingReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Error generating receipt'**
+  String get errorGeneratingReceipt;
+
+  /// No description provided for @receiptPrintSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt sent to print'**
+  String get receiptPrintSent;
+
+  /// No description provided for @receiptSharedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt shared successfully'**
+  String get receiptSharedSuccess;
+
+  /// No description provided for @receiptSavedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt saved successfully'**
+  String get receiptSavedSuccess;
+
+  /// No description provided for @errorProcessingReceipt.
+  ///
+  /// In en, this message translates to:
+  /// **'Error processing receipt'**
+  String get errorProcessingReceipt;
+
+  /// No description provided for @selectedDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Selected date'**
+  String get selectedDate;
+
+  /// No description provided for @productsSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Products sold'**
+  String get productsSold;
+
+  /// No description provided for @salesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sales count'**
+  String get salesCount;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @appLanguageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'App language'**
+  String get appLanguageLabel;
+
+  /// No description provided for @systemOption.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get systemOption;
+
+  /// No description provided for @portuguese.
+  ///
+  /// In en, this message translates to:
+  /// **'Portuguese'**
+  String get portuguese;
+
+  /// No description provided for @englishLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get englishLabel;
+
+  /// No description provided for @frenchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'French'**
+  String get frenchLabel;
+
+  /// No description provided for @accessibility.
+  ///
+  /// In en, this message translates to:
+  /// **'Accessibility'**
+  String get accessibility;
+
+  /// No description provided for @fontSizeNormal.
+  ///
+  /// In en, this message translates to:
+  /// **'Normal'**
+  String get fontSizeNormal;
+
+  /// No description provided for @fontSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get fontSizeLarge;
+
+  /// No description provided for @fontSizeExtra.
+  ///
+  /// In en, this message translates to:
+  /// **'Extra Large'**
+  String get fontSizeExtra;
+
+  /// No description provided for @security.
+  ///
+  /// In en, this message translates to:
+  /// **'Security'**
+  String get security;
+
+  /// No description provided for @changePasswordTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change Password'**
+  String get changePasswordTitle;
+
+  /// No description provided for @currentPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Current password'**
+  String get currentPassword;
+
+  /// No description provided for @newPasswordLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'New password'**
+  String get newPasswordLabel;
+
+  /// No description provided for @saveNewPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Save new password'**
+  String get saveNewPassword;
+
+  /// No description provided for @noClients.
+  ///
+  /// In en, this message translates to:
+  /// **'No clients'**
+  String get noClients;
+
+  /// No description provided for @searchClient.
+  ///
+  /// In en, this message translates to:
+  /// **'Search client'**
+  String get searchClient;
+
+  /// No description provided for @nameOrPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Name or phone'**
+  String get nameOrPhone;
+
+  /// No description provided for @name.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get name;
+
+  /// No description provided for @phone.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone'**
+  String get phone;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @errorFillStoreId.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: Fill store ID'**
+  String get errorFillStoreId;
+
+  /// No description provided for @newClient.
+  ///
+  /// In en, this message translates to:
+  /// **'New client'**
+  String get newClient;
+
+  /// No description provided for @confirmDeleteClientTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion'**
+  String get confirmDeleteClientTitle;
+
+  /// No description provided for @confirmDeleteClientPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete the client'**
+  String get confirmDeleteClientPrompt;
+
+  /// No description provided for @errorLoadingReceipts.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading receipts'**
+  String get errorLoadingReceipts;
+
+  /// No description provided for @receiptPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Receipt'**
+  String get receiptPrefix;
+
+  /// No description provided for @confirmDeletion.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm deletion'**
+  String get confirmDeletion;
+
+  /// No description provided for @confirmDeleteProductPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this item?'**
+  String get confirmDeleteProductPrompt;
+
+  /// No description provided for @deletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted successfully'**
+  String get deletedSuccess;
+
+  /// No description provided for @loadErrorPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Error loading'**
+  String get loadErrorPrefix;
+
+  /// No description provided for @noSales.
+  ///
+  /// In en, this message translates to:
+  /// **'No sales'**
+  String get noSales;
+
+  /// No description provided for @productInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Product information'**
+  String get productInfo;
+
+  /// No description provided for @productNameField.
+  ///
+  /// In en, this message translates to:
+  /// **'Product name'**
+  String get productNameField;
+
+  /// No description provided for @skuManualField.
+  ///
+  /// In en, this message translates to:
+  /// **'SKU/Manual code'**
+  String get skuManualField;
+
+  /// No description provided for @priceFcfaField.
+  ///
+  /// In en, this message translates to:
+  /// **'Price (FCFA)'**
+  String get priceFcfaField;
+
+  /// No description provided for @stockQtyField.
+  ///
+  /// In en, this message translates to:
+  /// **'Stock quantity'**
+  String get stockQtyField;
+
+  /// No description provided for @lowStockAlertField.
+  ///
+  /// In en, this message translates to:
+  /// **'Low stock alert'**
+  String get lowStockAlertField;
+
+  /// No description provided for @registerProductBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Register product'**
+  String get registerProductBtn;
+
+  /// No description provided for @updateProductBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Update product'**
+  String get updateProductBtn;
+
+  /// No description provided for @productCreatedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Product created successfully!'**
+  String get productCreatedMsg;
+
+  /// No description provided for @productUpdatedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Product updated successfully!'**
+  String get productUpdatedMsg;
+
+  /// No description provided for @updateProducts.
+  ///
+  /// In en, this message translates to:
+  /// **'Update products'**
+  String get updateProducts;
 }
 
 class _AppLocalizationsDelegate extends LocalizationsDelegate<AppLocalizations> {
