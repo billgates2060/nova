@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
 
 class AdminUsersScreen extends StatefulWidget {
-  const AdminUsersScreen({super.key});
+  final StoreInfo? selectedStore;
+  const AdminUsersScreen({super.key, this.selectedStore});
 
   @override
   State<AdminUsersScreen> createState() => _AdminUsersScreenState();
@@ -21,18 +22,28 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
 
   Future<void> _load() async {
     setState(() => _loading = true);
-    final users = await AdminService.listUsers();
-    setState(() {
-      _users = users;
-      _loading = false;
-    });
+    if (widget.selectedStore != null) {
+      final users = await AdminService.getStoreUsers(widget.selectedStore!.storeId);
+      setState(() {
+        _users = users;
+        _loading = false;
+      });
+    } else {
+      final users = await AdminService.listUsers();
+      setState(() {
+        _users = users;
+        _loading = false;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: TextField(
+        title: widget.selectedStore != null
+            ? Text('Usuários • ${widget.selectedStore!.storeName}')
+            : TextField(
           decoration: const InputDecoration(
             hintText: 'Buscar por nome, email ou loja...',
             border: InputBorder.none,
