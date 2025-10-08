@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
+import '../services/admin_service.dart';
 
 class AdminCreateUserScreen extends StatefulWidget {
-  const AdminCreateUserScreen({super.key});
+  final StoreInfo? selectedStore;
+  const AdminCreateUserScreen({super.key, this.selectedStore});
 
   @override
   State<AdminCreateUserScreen> createState() => _AdminCreateUserScreenState();
@@ -12,7 +14,6 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _storeIdController = TextEditingController();
   final TextEditingController _storeNameController = TextEditingController();
   DateTime? _blockedUntil;
   String _role = 'user';
@@ -22,20 +23,11 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text;
     final String name = _nameController.text.trim();
-    final String storeId = _storeIdController.text.trim();
     final String storeName = _storeNameController.text.trim();
 
-    if (name.isEmpty ||
-        email.isEmpty ||
-        password.length < 6 ||
-        storeId.isEmpty ||
-        storeName.isEmpty) {
+    if (name.isEmpty || email.isEmpty || password.length < 6) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Preencha nome, email, senha (>= 6), Nome da Loja e Store ID',
-          ),
-        ),
+        const SnackBar(content: Text('Preencha nome, email e senha (>= 6)')),
       );
       return;
     }
@@ -48,8 +40,12 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
       'email': email,
       'password': password,
       'role': _role,
-      'store_id': storeId,
-      'store_name': storeName,
+      if (widget.selectedStore != null)
+        'store_id': widget.selectedStore!.storeId,
+      if (widget.selectedStore != null)
+        'store_name': widget.selectedStore!.storeName,
+      if (widget.selectedStore == null && storeName.isNotEmpty)
+        'store_name': storeName,
       if (_blockedUntil != null)
         'blockedUntil': _blockedUntil!.toIso8601String(),
     };
@@ -109,24 +105,17 @@ class _AdminCreateUserScreenState extends State<AdminCreateUserScreen> {
               ),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _storeNameController,
-              decoration: const InputDecoration(
-                labelText: 'Nome da Loja',
-                border: OutlineInputBorder(),
-                helperText: 'Obrigatório. Nome exibido no recibo',
+            if (widget.selectedStore == null) ...[
+              TextField(
+                controller: _storeNameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nome da Loja (opcional)',
+                  border: OutlineInputBorder(),
+                  helperText: 'Se vazio, o backend definirá automaticamente',
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _storeIdController,
-              decoration: const InputDecoration(
-                labelText: 'Store ID',
-                border: OutlineInputBorder(),
-                helperText:
-                    'Obrigatório. Vincula o usuário a uma loja específica',
-              ),
-            ),
+              const SizedBox(height: 12),
+            ],
             const SizedBox(height: 12),
             Row(
               children: [

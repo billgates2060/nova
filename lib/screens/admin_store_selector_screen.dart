@@ -16,11 +16,30 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
   List<StoreInfo> _stores = [];
   bool _isLoading = true;
   StoreStats? _globalStats;
+  String _query = '';
+  String _sort = 'name';
 
   @override
   void initState() {
     super.initState();
     _loadData();
+  }
+
+  List<StoreInfo> get _filteredAndSortedStores {
+    List<StoreInfo> list = _stores.where((s) {
+      if (_query.isEmpty) return true;
+      return s.storeName.toLowerCase().contains(_query.toLowerCase()) ||
+          s.storeId.toLowerCase().contains(_query.toLowerCase());
+    }).toList();
+
+    if (_sort == 'name') {
+      list.sort(
+        (a, b) =>
+            a.storeName.toLowerCase().compareTo(b.storeName.toLowerCase()),
+      );
+    }
+    // For 'revenue' sorting we would need pre-fetched stats; keeping name sort to avoid extra requests.
+    return list;
   }
 
   Future<void> _loadData() async {
@@ -73,6 +92,33 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          decoration: const InputDecoration(
+                            prefixIcon: Icon(Icons.search),
+                            hintText: 'Buscar loja...',
+                            border: OutlineInputBorder(),
+                          ),
+                          onChanged: (v) => setState(() => _query = v.trim()),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      DropdownButton<String>(
+                        value: _sort,
+                        items: const [
+                          DropdownMenuItem(value: 'name', child: Text('Nome')),
+                          DropdownMenuItem(
+                            value: 'revenue',
+                            child: Text('Receita'),
+                          ),
+                        ],
+                        onChanged: (v) => setState(() => _sort = v ?? 'name'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   // Estatísticas Globais
                   if (_globalStats != null) ...[
                     _buildGlobalStatsCard(_globalStats!),
@@ -92,7 +138,7 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
                     child: _stores.isEmpty
                         ? _buildEmptyState()
                         : ResponsiveList(
-                            children: _stores
+                            children: _filteredAndSortedStores
                                 .map((store) => _buildStoreCard(store))
                                 .toList(),
                           ),
@@ -253,10 +299,42 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
                       ],
                     ),
                   ),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    color: Colors.grey[400],
-                    size: 16,
+                  FutureBuilder<StoreStats>(
+                    future: AdminService.getStoreStats(store.storeId),
+                    builder: (context, snap) {
+                      final revenue = snap.hasData ? snap.data!.revenue : null;
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.green.withOpacity(0.07),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: Colors.green.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.attach_money,
+                              color: Colors.green,
+                              size: 16,
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              revenue == null ? '—' : Currency.fcfa(revenue),
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

@@ -32,18 +32,48 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     setState(() {
       _loading = true;
     });
-    final usersResp = await ApiClient.get('/users', auth: true);
-    final statsResp = await ApiClient.get('/admin/stats', auth: true);
-    setState(() {
-      _users = jsonDecode(usersResp.body) as List<dynamic>;
-      _stats = jsonDecode(statsResp.body) as Map<String, dynamic>;
-      _loading = false;
-    });
+    try {
+      if (widget.selectedStore != null) {
+        final storeId = widget.selectedStore!.storeId;
+        final users = await AdminService.getStoreUsers(storeId);
+        final storeStats = await AdminService.getStoreStats(storeId);
+        setState(() {
+          _users = users;
+          _stats = {
+            'users': storeStats.users,
+            'activeUsers': storeStats.activeUsers,
+            'salesCount': storeStats.salesCount,
+            'revenue': storeStats.revenue,
+          };
+          _loading = false;
+        });
+      } else {
+        final usersResp = await ApiClient.get('/users', auth: true);
+        final statsResp = await ApiClient.get('/admin/stats', auth: true);
+        setState(() {
+          _users = jsonDecode(usersResp.body) as List<dynamic>;
+          _stats = jsonDecode(statsResp.body) as Map<String, dynamic>;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      setState(() {
+        _loading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Erro ao carregar dados: $e')));
+      }
+    }
   }
 
   Future<void> _goToCreateUser() async {
     final created = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const AdminCreateUserScreen()),
+      MaterialPageRoute(
+        builder: (_) =>
+            AdminCreateUserScreen(selectedStore: widget.selectedStore),
+      ),
     );
     if (created == true) {
       await _loadAll();
@@ -115,7 +145,11 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Admin - Contas'),
+        title: Text(
+          widget.selectedStore != null
+              ? 'Admin - ${widget.selectedStore!.storeName}'
+              : 'Admin - Contas',
+        ),
         actions: [
           IconButton(onPressed: _loadAll, icon: const Icon(Icons.refresh)),
           IconButton(
