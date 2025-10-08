@@ -116,12 +116,14 @@ class AdminService {
     String? status,
     String? storeId,
     String? blockedUntil,
+    String? storeName,
   }) async {
     final body = <String, dynamic>{};
     if (role != null) body['role'] = role;
     if (status != null) body['status'] = status;
     if (storeId != null) body['storeId'] = storeId;
     if (blockedUntil != null) body['blockedUntil'] = blockedUntil;
+    if (storeName != null) body['storeName'] = storeName;
     final resp = await ApiClient.patch('/users/$userId', body, auth: true);
     if (resp.statusCode != 200) return null;
     return jsonDecode(resp.body) as Map<String, dynamic>;
