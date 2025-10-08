@@ -249,7 +249,7 @@ pw.Widget _buildReceiptInfo(ReceiptData data, ReceiptConfig config) {
 
 /// Informações do cliente
 pw.Widget _buildClientInfo(ReceiptClient? client, ReceiptConfig config) {
-  if (client == null || client.name == null) {
+  if (client == null || (client.name == null || client.name!.trim().isEmpty)) {
     return pw.Container();
   }
 

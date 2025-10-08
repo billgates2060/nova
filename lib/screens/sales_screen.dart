@@ -378,6 +378,8 @@ class _SalesScreenState extends State<SalesScreen> {
   Future<void> _generateAndShareAndSaveReceipt(Sale sale) async {
     try {
       final config = await PrintService.getDefaultConfig();
+      final originalSubtotal = sale.quantity * sale.unitPrice;
+      final discountAmount = ((originalSubtotal - sale.totalPrice).clamp(0, double.infinity)) as double;
       final receiptData = PrintService.createSaleReceipt(
         receiptNumber: '${sale.id ?? DateTime.now().millisecondsSinceEpoch}',
         date: sale.saleDate,
@@ -394,6 +396,7 @@ class _SalesScreenState extends State<SalesScreen> {
         client: sale.clientName != null
             ? ReceiptClient(name: sale.clientName)
             : null,
+        discount: discountAmount,
       );
       await PrintService.shareReceipt(receiptData: receiptData, config: config);
       await PrintService.saveReceipt(receiptData: receiptData, config: config);
@@ -425,6 +428,8 @@ class _SalesScreenState extends State<SalesScreen> {
   Future<void> _handleReceiptAction(String action, Sale sale) async {
     try {
       final config = await PrintService.getDefaultConfig();
+      final originalSubtotal = sale.quantity * sale.unitPrice;
+      final discountAmount = ((originalSubtotal - sale.totalPrice).clamp(0, double.infinity)) as double;
       final receiptData = PrintService.createSaleReceipt(
         receiptNumber: '${sale.id ?? DateTime.now().millisecondsSinceEpoch}',
         date: sale.saleDate,
@@ -441,6 +446,7 @@ class _SalesScreenState extends State<SalesScreen> {
         client: sale.clientName != null
             ? ReceiptClient(name: sale.clientName)
             : null,
+        discount: discountAmount,
       );
 
       switch (action) {
