@@ -104,6 +104,29 @@ class AdminService {
     }
   }
 
+  static Future<List<Map<String, dynamic>>> listUsers() async {
+    final resp = await ApiClient.get('/users', auth: true);
+    if (resp.statusCode != 200) return [];
+    final List<dynamic> data = jsonDecode(resp.body);
+    return data.cast<Map<String, dynamic>>();
+  }
+
+  static Future<Map<String, dynamic>?> updateUser(String userId, {
+    String? role,
+    String? status,
+    String? storeId,
+    String? blockedUntil,
+  }) async {
+    final body = <String, dynamic>{};
+    if (role != null) body['role'] = role;
+    if (status != null) body['status'] = status;
+    if (storeId != null) body['storeId'] = storeId;
+    if (blockedUntil != null) body['blockedUntil'] = blockedUntil;
+    final resp = await ApiClient.patch('/users/$userId', body, auth: true);
+    if (resp.statusCode != 200) return null;
+    return jsonDecode(resp.body) as Map<String, dynamic>;
+  }
+
   /// Busca produtos de uma loja específica
   static Future<List<Map<String, dynamic>>> getStoreProducts(String storeId) async {
     try {

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
 import '../services/currency.dart';
 import 'store_stats_screen.dart';
+import 'admin_users_screen.dart';
+import 'admin_stores_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   const AdminDashboardScreen({super.key});
@@ -43,6 +45,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AdminUsersScreen()),
+                        ),
+                        icon: const Icon(Icons.group),
+                        label: const Text('Usuários'),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => const AdminStoresScreen()),
+                        ),
+                        icon: const Icon(Icons.storefront),
+                        label: const Text('Lojas'),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
