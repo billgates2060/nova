@@ -225,4 +225,38 @@ class AppLocalizationsFr extends AppLocalizations {
   String get edit => 'Modifier';
   @override
   String get delete => 'Supprimer';
+
+  // Settings (language & accessibility)
+  @override
+  String get language => 'Langue';
+  @override
+  String get appLanguageLabel => 'Langue de l\'application';
+  @override
+  String get systemOption => 'Système';
+  @override
+  String get portuguese => 'Portugais';
+  @override
+  String get englishLabel => 'Anglais';
+  @override
+  String get frenchLabel => 'Français';
+  @override
+  String get accessibility => 'Accessibilité';
+  @override
+  String get fontSizeNormal => 'Normal';
+  @override
+  String get fontSizeLarge => 'Grand';
+  @override
+  String get fontSizeExtra => 'Très grand';
+  @override
+  String get security => 'Sécurité';
+  @override
+  String get changePasswordTitle => 'Modifier le mot de passe';
+
+  // Receipts/messages
+  @override
+  String get errorLoadingReceipts => 'Erreur lors du chargement des reçus';
+  @override
+  String get receiptPrefix => 'Reçu';
+  @override
+  String get shareReceiptTextPrefix => 'Reçu de vente #';
 }

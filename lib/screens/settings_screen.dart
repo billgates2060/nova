@@ -49,9 +49,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          const Text(
-            'Idioma',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            AppLocalizations.of(context)!.language,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Row(
@@ -61,15 +61,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Expanded(
                 child: DropdownButtonFormField<String>(
                   value: MyApp.of(context)?.currentLocaleCode(),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    labelText: 'Idioma do aplicativo',
+                  decoration: InputDecoration(
+                    border: const OutlineInputBorder(),
+                    labelText:
+                        AppLocalizations.of(context)!.appLanguageLabel,
                   ),
-                  items: const [
-                    DropdownMenuItem(value: 'system', child: Text('Sistema')),
-                    DropdownMenuItem(value: 'pt', child: Text('Português')),
-                    DropdownMenuItem(value: 'en', child: Text('English')),
-                    DropdownMenuItem(value: 'fr', child: Text('Français')),
+                  items: [
+                    DropdownMenuItem(
+                        value: 'system',
+                        child: Text(
+                            AppLocalizations.of(context)!.systemOption)),
+                    DropdownMenuItem(
+                        value: 'pt',
+                        child:
+                            Text(AppLocalizations.of(context)!.portuguese)),
+                    DropdownMenuItem(
+                        value: 'en',
+                        child:
+                            Text(AppLocalizations.of(context)!.englishLabel)),
+                    DropdownMenuItem(
+                        value: 'fr',
+                        child:
+                            Text(AppLocalizations.of(context)!.frenchLabel)),
                   ],
                   onChanged: (code) {
                     final app = MyApp.of(context);
@@ -81,30 +94,33 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           // Acessibilidade: tamanho da fonte
-          const Text(
-            'Acessibilidade',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            AppLocalizations.of(context)!.accessibility,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
             runSpacing: 12,
             children: [
-              _fontScaleChip(context, 1.0, 'Normal'),
-              _fontScaleChip(context, 1.2, 'Grande'),
-              _fontScaleChip(context, 1.4, 'Extra'),
+              _fontScaleChip(
+                  context, 1.0, AppLocalizations.of(context)!.fontSizeNormal),
+              _fontScaleChip(
+                  context, 1.2, AppLocalizations.of(context)!.fontSizeLarge),
+              _fontScaleChip(
+                  context, 1.4, AppLocalizations.of(context)!.fontSizeExtra),
             ],
           ),
           const SizedBox(height: 24),
           // Contraste alto (tema escuro/claro controlado pelo sistema já ativo)
-          const Text(
-            'Segurança',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            AppLocalizations.of(context)!.security,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Alterar senha',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+          Text(
+            AppLocalizations.of(context)!.changePasswordTitle,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 12),
           TextField(

@@ -573,7 +573,7 @@ class _DashboardHomeState extends State<DashboardHome> {
                             context,
                           ),
                           _buildActionCard(
-                            'Ver Relatórios',
+                            AppLocalizations.of(context)!.viewReports,
                             Icons.analytics_rounded,
                             const Color(0xFF8B5CF6),
                             () {

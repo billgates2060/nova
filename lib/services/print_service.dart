@@ -1,10 +1,11 @@
-import 'dart:typed_data';
+// removed unused: dart:typed_data
 import 'package:flutter/material.dart';
 import 'package:printing/printing.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import '../services/reports/receipt_pdf.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import '../services/auth_service.dart';
 
 /// Serviço de impressão e compartilhamento de recibos
@@ -97,9 +98,10 @@ class PrintService {
         config: config,
       );
 
+      final prefix = AppLocalizations.of(context)!.receiptPrefix;
       await Printing.layoutPdf(
         onLayout: (format) => pdfBytes,
-        name: 'Recibo_${receiptData.receiptNumber}',
+        name: '${prefix}_${receiptData.receiptNumber}',
         usePrinterSettings: false,
       );
     } catch (e) {

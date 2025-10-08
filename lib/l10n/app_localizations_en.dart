@@ -223,4 +223,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get newPasswordLabel => 'New password';
   @override
   String get saveNewPassword => 'Save new password';
+
+  // Settings (language & accessibility)
+  @override
+  String get language => 'Language';
+  @override
+  String get appLanguageLabel => 'App language';
+  @override
+  String get systemOption => 'System';
+  @override
+  String get portuguese => 'Portuguese';
+  @override
+  String get englishLabel => 'English';
+  @override
+  String get frenchLabel => 'French';
+  @override
+  String get accessibility => 'Accessibility';
+  @override
+  String get fontSizeNormal => 'Normal';
+  @override
+  String get fontSizeLarge => 'Large';
+  @override
+  String get fontSizeExtra => 'Extra';
+  @override
+  String get security => 'Security';
+  @override
+  String get changePasswordTitle => 'Change password';
+
+  // Receipts/messages
+  @override
+  String get errorLoadingReceipts => 'Error loading receipts';
+  @override
+  String get receiptPrefix => 'Receipt';
+  @override
+  String get shareReceiptTextPrefix => 'Sale receipt #';
 }

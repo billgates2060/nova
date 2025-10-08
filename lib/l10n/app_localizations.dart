@@ -298,6 +298,25 @@ abstract class AppLocalizations {
   String get currentPassword;
   String get newPasswordLabel;
   String get saveNewPassword;
+
+  // Settings (language & accessibility)
+  String get language;
+  String get appLanguageLabel;
+  String get systemOption;
+  String get portuguese;
+  String get englishLabel;
+  String get frenchLabel;
+  String get accessibility;
+  String get fontSizeNormal;
+  String get fontSizeLarge;
+  String get fontSizeExtra;
+  String get security;
+  String get changePasswordTitle;
+
+  // Receipts/messages
+  String get errorLoadingReceipts;
+  String get receiptPrefix;
+  String get shareReceiptTextPrefix;
 }
 
 class _AppLocalizationsDelegate

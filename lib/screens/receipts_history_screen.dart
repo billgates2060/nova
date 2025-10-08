@@ -3,6 +3,7 @@ import 'dart:io';
 import '../services/print_service.dart';
 import '../widgets/responsive_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:nova/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:cross_file/cross_file.dart';
 
@@ -42,7 +43,9 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao carregar recibos: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorLoadingReceipts}: $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -77,12 +80,12 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
             int.parse(timestamp),
           );
           final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
-          return 'Recibo #$receiptNumber - $formattedDate';
+          return '${AppLocalizations.of(context)!.receiptPrefix} #$receiptNumber - $formattedDate';
         } catch (e) {
-          return 'Recibo #$receiptNumber';
+          return '${AppLocalizations.of(context)!.receiptPrefix} #$receiptNumber';
         }
       }
-      return 'Recibo #$receiptNumber';
+      return '${AppLocalizations.of(context)!.receiptPrefix} #$receiptNumber';
     }
 
     return fileName;
@@ -110,16 +113,19 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Confirmar Exclusão'),
-        content: const Text('Tem certeza que deseja excluir este recibo?'),
+        title: Text(AppLocalizations.of(context)!.confirmDeletion),
+        content: Text(AppLocalizations.of(context)!.confirmDeleteProductPrompt),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
+            child: Text(AppLocalizations.of(context)!.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Excluir', style: TextStyle(color: Colors.red)),
+            child: Text(
+              AppLocalizations.of(context)!.delete,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -131,8 +137,8 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
         await _loadReceipts();
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Recibo excluído com sucesso!'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.deletedSuccess),
               backgroundColor: Colors.green,
             ),
           );
@@ -141,7 +147,9 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Erro ao excluir recibo: $e'),
+              content: Text(
+                '${AppLocalizations.of(context)!.loadErrorPrefix} $e',
+              ),
               backgroundColor: Colors.red,
             ),
           );
@@ -157,7 +165,9 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro ao compartilhar recibo: $e'),
+            content: Text(
+              '${AppLocalizations.of(context)!.errorProcessingReceipt} $e',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -169,14 +179,14 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ResponsiveAppBar(
-        title: 'Histórico de Recibos',
+        title: AppLocalizations.of(context)!.receiptsHistory,
         backgroundColor: Colors.purple,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _loadReceipts,
-            tooltip: 'Atualizar',
+            tooltip: AppLocalizations.of(context)!.updateTooltip,
           ),
         ],
       ),
@@ -187,7 +197,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
             padding: const EdgeInsets.all(16),
             child: TextField(
               decoration: InputDecoration(
-                hintText: 'Buscar recibos...',
+                hintText: AppLocalizations.of(context)!.searchTooltip,
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -237,8 +247,8 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
-                ? 'Nenhum recibo salvo'
-                : 'Nenhum recibo encontrado',
+                ? AppLocalizations.of(context)!.noSales
+                : AppLocalizations.of(context)!.noSales,
             style: Theme.of(
               context,
             ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
@@ -246,8 +256,8 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
-                ? 'Os recibos salvos aparecerão aqui'
-                : 'Tente uma busca diferente',
+                ? AppLocalizations.of(context)!.receipts
+                : AppLocalizations.of(context)!.filters,
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
@@ -313,23 +323,23 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                   }
                 },
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'share',
                     child: Row(
                       children: [
-                        Icon(Icons.share, color: Colors.blue),
-                        SizedBox(width: 8),
-                        Text('Compartilhar'),
+                        const Icon(Icons.share, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.share),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red),
-                        SizedBox(width: 8),
-                        Text('Excluir'),
+                        const Icon(Icons.delete, color: Colors.red),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.delete),
                       ],
                     ),
                   ),
@@ -344,7 +354,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => _shareReceipt(file),
                   icon: const Icon(Icons.share),
-                  label: const Text('Compartilhar'),
+                  label: Text(AppLocalizations.of(context)!.share),
                   style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
                 ),
               ),
@@ -353,7 +363,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => _deleteReceipt(file),
                   icon: const Icon(Icons.delete),
-                  label: const Text('Excluir'),
+                  label: Text(AppLocalizations.of(context)!.delete),
                   style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 ),
               ),

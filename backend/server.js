@@ -182,7 +182,7 @@ app.post('/auth/login', async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'email and password required' });
     const db = await dbPromise;
-    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name, name FROM users WHERE email = ?', [email]);
+    let user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name, name FROM users WHERE email = ?', [email]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status !== 'active') return res.status(403).json({ error: 'account_blocked' });
     if (user.blocked_until) {
@@ -194,6 +194,12 @@ app.post('/auth/login', async (req, res) => {
     }
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
+    // Auto-provision store for users without one (e.g., default admin)
+    if (!user.store_id || !user.store_name) {
+      const generated = generateStoreIdentifiers(user.name || 'Loja');
+      await db.run('UPDATE users SET store_id = ?, store_name = ? WHERE id = ?', [generated.storeId, generated.storeName, user.id]);
+      user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name, name FROM users WHERE id = ?', [user.id]);
+    }
     const token = jwt.sign({ id: user.id, email: user.email, role: user.role, storeId: user.store_id }, JWT_SECRET, { expiresIn: '1h' });
     // issue refresh token (30 days)
     const refreshToken = randomTokenString(32);
