@@ -16,11 +16,25 @@ const app = express();
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
 }));
-app.use(cors({
-  origin: '*',
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
-}));
+
+// Centralized CORS configuration with explicit preflight handling
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow all origins by default; tighten if you need to restrict
+    callback(null, true);
+  },
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  optionsSuccessStatus: 204,
+};
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
+
+// Ensure proxies/CDNs vary cache by Origin
+app.use((req, res, next) => {
+  res.header('Vary', 'Origin');
+  next();
+});
 app.disable('x-powered-by');
 
 const limiter = rateLimit({

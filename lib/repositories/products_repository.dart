@@ -12,8 +12,15 @@ class ProductsRepository {
       try {
         final resp = await ApiClient.get('/products', auth: true);
         if (resp.statusCode != 200) return [];
-        final list = (jsonDecode(resp.body) as List)
-            .cast<Map<String, dynamic>>();
+        final decoded = jsonDecode(resp.body);
+        final List<dynamic> rawList = decoded is List
+            ? decoded
+            : (decoded is Map && decoded['items'] is List)
+            ? decoded['items'] as List
+            : (decoded is Map && decoded['data'] is List)
+            ? decoded['data'] as List
+            : <dynamic>[];
+        final list = rawList.cast<Map<String, dynamic>>();
         return list
             .map(
               (p) => {
@@ -67,7 +74,15 @@ class ProductsRepository {
   Future<void> syncFromRemote() async {
     final resp = await ApiClient.get('/products', auth: true);
     if (resp.statusCode != 200) return;
-    final list = (jsonDecode(resp.body) as List).cast<Map<String, dynamic>>();
+    final decoded = jsonDecode(resp.body);
+    final List<dynamic> rawList = decoded is List
+        ? decoded
+        : (decoded is Map && decoded['items'] is List)
+        ? decoded['items'] as List
+        : (decoded is Map && decoded['data'] is List)
+        ? decoded['data'] as List
+        : <dynamic>[];
+    final list = rawList.cast<Map<String, dynamic>>();
     if (kIsWeb) {
       // No local DB on web; remote results are used on-demand via searchRemote
       return;
@@ -118,8 +133,15 @@ class ProductsRepository {
         auth: true,
       );
       if (resp.statusCode == 200) {
-        final list = (jsonDecode(resp.body) as List)
-            .cast<Map<String, dynamic>>();
+        final decoded = jsonDecode(resp.body);
+        final List<dynamic> rawList = decoded is List
+            ? decoded
+            : (decoded is Map && decoded['items'] is List)
+            ? decoded['items'] as List
+            : (decoded is Map && decoded['data'] is List)
+            ? decoded['data'] as List
+            : <dynamic>[];
+        final list = rawList.cast<Map<String, dynamic>>();
         return list
             .map(
               (p) => {

@@ -52,7 +52,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
           selectedItemColor: Colors.blue[600],
           unselectedItemColor: Colors.grey[600],
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.dashboard), label: 'Início'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.dashboard),
+              label: 'Início',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.inventory_2),
               label: 'Produtos',
@@ -61,7 +64,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               icon: Icon(Icons.shopping_cart),
               label: 'Vendas',
             ),
-            BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Resumo'),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.analytics),
+              label: 'Resumo',
+            ),
             BottomNavigationBarItem(
               icon: Icon(Icons.people_alt),
               label: 'Clientes',
@@ -79,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _currentIndex = index;
                 });
               },
-              labelType: NavigationRailLabelType.all,
+              labelType: NavigationRailLabelType.none,
               destinations: const [
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard),
@@ -119,7 +125,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   _currentIndex = index;
                 });
               },
-              labelType: NavigationRailLabelType.all,
+              labelType: NavigationRailLabelType.none,
               destinations: const [
                 NavigationRailDestination(
                   icon: Icon(Icons.dashboard),
@@ -306,8 +312,8 @@ class _DashboardHomeState extends State<DashboardHome> {
             child: ResponsivePadding(
               child: SingleChildScrollView(
                 child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     // Hero/Header com nome da loja e KPIs
                     FutureBuilder<AuthProfile?>(
                       future: _profileFuture,
@@ -471,16 +477,17 @@ class _DashboardHomeState extends State<DashboardHome> {
                       builder: (context, roleSnapshot) {
                         final isAdmin = roleSnapshot.data == 'admin';
                         if (!isAdmin) return const SizedBox.shrink();
-                        
+
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               'Administração',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey[800],
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey[800],
+                                  ),
                             ),
                             const SizedBox(height: 16),
                             _buildActionCard(
@@ -490,7 +497,8 @@ class _DashboardHomeState extends State<DashboardHome> {
                               () {
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
-                                    builder: (_) => const AdminStoreSelectorScreen(),
+                                    builder: (_) =>
+                                        const AdminStoreSelectorScreen(),
                                   ),
                                 );
                               },
@@ -815,12 +823,17 @@ class _DailyGoalProgress extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Meta diária: $goal vendas',
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              Expanded(
+                child: Text(
+                  'Meta diária: $goal vendas',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
               ),
+              const SizedBox(width: 8),
               Text('$emoji ${((pct) * 100).toStringAsFixed(0)}%'),
             ],
           ),
