@@ -2,13 +2,13 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../services/api_client.dart';
 import '../services/admin_service.dart';
-import '../widgets/responsive_widgets.dart';
 import 'admin_create_user_screen.dart';
 import '../services/auth_service.dart';
+import '../services/currency.dart';
 
 class AdminUsersScreen extends StatefulWidget {
   final StoreInfo? selectedStore;
-  
+
   const AdminUsersScreen({super.key, this.selectedStore});
 
   @override

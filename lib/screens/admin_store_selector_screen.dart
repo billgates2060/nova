@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import '../services/admin_service.dart';
 import '../widgets/responsive_widgets.dart';
 import 'admin_users_screen.dart';
+import '../services/currency.dart';
 
 class AdminStoreSelectorScreen extends StatefulWidget {
   const AdminStoreSelectorScreen({super.key});
 
   @override
-  State<AdminStoreSelectorScreen> createState() => _AdminStoreSelectorScreenState();
+  State<AdminStoreSelectorScreen> createState() =>
+      _AdminStoreSelectorScreenState();
 }
 
 class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
@@ -29,7 +31,7 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
     try {
       final stores = await AdminService.getStores();
       final globalStats = await AdminService.getGlobalStats();
-      
+
       setState(() {
         _stores = stores;
         _globalStats = globalStats;
@@ -76,7 +78,7 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
                     _buildGlobalStatsCard(_globalStats!),
                     const SizedBox(height: 24),
                   ],
-                  
+
                   // Lista de Lojas
                   Text(
                     'Lojas Cadastradas',
@@ -85,12 +87,14 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  
+
                   Expanded(
                     child: _stores.isEmpty
                         ? _buildEmptyState()
                         : ResponsiveList(
-                            children: _stores.map((store) => _buildStoreCard(store)).toList(),
+                            children: _stores
+                                .map((store) => _buildStoreCard(store))
+                                .toList(),
                           ),
                   ),
                 ],
@@ -123,12 +127,42 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
             tabletColumns: 3,
             desktopColumns: 6,
             children: [
-              _buildStatItem('Lojas', '${_stores.length}', Icons.store, Colors.blue),
-              _buildStatItem('Usuários', '${stats.users}', Icons.people, Colors.green),
-              _buildStatItem('Ativos', '${stats.activeUsers}', Icons.check_circle, Colors.green),
-              _buildStatItem('Vendas', '${stats.salesCount}', Icons.shopping_cart, Colors.orange),
-              _buildStatItem('Produtos', '${stats.productsCount}', Icons.inventory, Colors.blue),
-              _buildStatItem('Receita', Currency.fcfa(stats.revenue), Icons.attach_money, Colors.green),
+              _buildStatItem(
+                'Lojas',
+                '${_stores.length}',
+                Icons.store,
+                Colors.blue,
+              ),
+              _buildStatItem(
+                'Usuários',
+                '${stats.users}',
+                Icons.people,
+                Colors.green,
+              ),
+              _buildStatItem(
+                'Ativos',
+                '${stats.activeUsers}',
+                Icons.check_circle,
+                Colors.green,
+              ),
+              _buildStatItem(
+                'Vendas',
+                '${stats.salesCount}',
+                Icons.shopping_cart,
+                Colors.orange,
+              ),
+              _buildStatItem(
+                'Produtos',
+                '${stats.productsCount}',
+                Icons.inventory,
+                Colors.blue,
+              ),
+              _buildStatItem(
+                'Receita',
+                Currency.fcfa(stats.revenue),
+                Icons.attach_money,
+                Colors.green,
+              ),
             ],
           ),
         ],
@@ -136,7 +170,12 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
     );
   }
 
-  Widget _buildStatItem(String label, String value, IconData icon, Color color) {
+  Widget _buildStatItem(
+    String label,
+    String value,
+    IconData icon,
+    Color color,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -159,10 +198,7 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
           const SizedBox(height: 4),
           Text(
             label,
-            style: TextStyle(
-              fontSize: 12,
-              color: color.withOpacity(0.8),
-            ),
+            style: TextStyle(fontSize: 12, color: color.withOpacity(0.8)),
             textAlign: TextAlign.center,
           ),
         ],
@@ -264,24 +300,20 @@ class _AdminStoreSelectorScreenState extends State<AdminStoreSelectorScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.store_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.store_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Nenhuma loja cadastrada',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             'As lojas aparecerão aqui quando usuários forem cadastrados',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[500],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
         ],

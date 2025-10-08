@@ -3,7 +3,6 @@ import 'products_screen.dart';
 import 'sales_screen.dart';
 import 'daily_summary_screen.dart';
 import '../services/auth_service.dart';
-import 'admin_users_screen.dart';
 import 'admin_store_selector_screen.dart';
 import '../services/dashboard_service.dart';
 import 'welcome_screen.dart';
@@ -16,6 +15,7 @@ import '../services/auth_service_ext.dart';
 import '../services/notifications_service.dart';
 import 'notifications_screen.dart';
 import 'package:nova/l10n/app_localizations.dart';
+import '../services/currency.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -303,11 +303,9 @@ class _DashboardHomeState extends State<DashboardHome> {
 
           return RefreshIndicator(
             onRefresh: _refresh,
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 250),
-              child: ResponsivePadding(
-                child: SingleChildScrollView(
-                  child: Column(
+            child: ResponsivePadding(
+              child: SingleChildScrollView(
+                child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                     // Hero/Header com nome da loja e KPIs

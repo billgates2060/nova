@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart' as pdf;
 
 /// Tipos de recibo disponíveis
 enum ReceiptType {
@@ -63,12 +64,7 @@ class ReceiptClient {
   final String? email;
   final String? address;
 
-  const ReceiptClient({
-    this.name,
-    this.phone,
-    this.email,
-    this.address,
-  });
+  const ReceiptClient({this.name, this.phone, this.email, this.address});
 }
 
 /// Dados completos do recibo
@@ -113,10 +109,10 @@ Future<Uint8List> buildReceiptPdf({
 }) async {
   final doc = pw.Document();
   final pageWidth = 300.0; // Largura padrão para recibo térmico
-  
+
   doc.addPage(
     pw.Page(
-      pageFormat: pw.PdfPageFormat(pageWidth, double.infinity),
+      pageFormat: pdf.PdfPageFormat(pageWidth, double.infinity),
       build: (context) => pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.center,
         children: [
@@ -141,7 +137,7 @@ Future<Uint8List> buildReceiptPdf({
       ),
     ),
   );
-  
+
   return doc.save();
 }
 
@@ -155,19 +151,23 @@ Future<Uint8List> buildSimpleReceiptPdf({
   required double paid,
   required double troco,
 }) async {
-  final receiptItems = items.map((item) => ReceiptItem(
-    name: item['name'].toString(),
-    quantity: item['qty'] as int,
-    unitPrice: (item['price'] as num).toDouble(),
-    total: (item['total'] as num).toDouble(),
-  )).toList();
+  final receiptItems = items
+      .map(
+        (item) => ReceiptItem(
+          name: item['name'].toString(),
+          quantity: item['qty'] as int,
+          unitPrice: (item['price'] as num).toDouble(),
+          total: (item['total'] as num).toDouble(),
+        ),
+      )
+      .toList();
 
   final receiptData = ReceiptData(
     receiptNumber: '${DateTime.now().millisecondsSinceEpoch}',
     date: date,
     type: ReceiptType.sale,
-    client: clientName != null && clientName.isNotEmpty 
-        ? ReceiptClient(name: clientName) 
+    client: clientName != null && clientName.isNotEmpty
+        ? ReceiptClient(name: clientName)
         : null,
     items: receiptItems,
     subtotal: total,
@@ -176,10 +176,7 @@ Future<Uint8List> buildSimpleReceiptPdf({
     change: troco,
   );
 
-  final config = ReceiptConfig(
-    storeName: storeName,
-    currency: 'FCFA',
-  );
+  final config = ReceiptConfig(storeName: storeName, currency: 'FCFA');
 
   return buildReceiptPdf(receiptData: receiptData, config: config);
 }
@@ -193,10 +190,7 @@ pw.Widget _buildHeader(ReceiptConfig config) {
         pw.Image(pw.MemoryImage(Uint8List(0)), width: 60, height: 60),
       pw.Text(
         config.storeName,
-        style: pw.TextStyle(
-          fontSize: 18,
-          fontWeight: pw.FontWeight.bold,
-        ),
+        style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
         textAlign: pw.TextAlign.center,
       ),
       if (config.showStoreInfo) ...[
@@ -227,12 +221,14 @@ pw.Widget _buildHeader(ReceiptConfig config) {
 /// Informações do recibo
 pw.Widget _buildReceiptInfo(ReceiptData data, ReceiptConfig config) {
   final dateFormat = DateFormat('dd/MM/yyyy HH:mm');
-  final receiptTypeText = {
-    ReceiptType.sale: 'VENDA',
-    ReceiptType.refund: 'DEVOLUÇÃO',
-    ReceiptType.daily: 'RESUMO DIÁRIO',
-    ReceiptType.inventory: 'ESTOQUE',
-  }[data.type] ?? 'RECIBO';
+  final receiptTypeText =
+      {
+        ReceiptType.sale: 'VENDA',
+        ReceiptType.refund: 'DEVOLUÇÃO',
+        ReceiptType.daily: 'RESUMO DIÁRIO',
+        ReceiptType.inventory: 'ESTOQUE',
+      }[data.type] ??
+      'RECIBO';
 
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -245,8 +241,7 @@ pw.Widget _buildReceiptInfo(ReceiptData data, ReceiptConfig config) {
         ],
       ),
       pw.Text('Data: ${dateFormat.format(data.date)}'),
-      if (data.cashierName != null)
-        pw.Text('Vendedor: ${data.cashierName}'),
+      if (data.cashierName != null) pw.Text('Vendedor: ${data.cashierName}'),
       pw.Divider(),
     ],
   );
@@ -287,53 +282,79 @@ pw.Widget _buildItemsTable(List<ReceiptItem> items, ReceiptConfig config) {
         },
         children: [
           pw.TableRow(
-            decoration: const pw.BoxDecoration(color: pw.PdfColors.grey200),
+            decoration: const pw.BoxDecoration(color: pdf.PdfColors.grey200),
             children: [
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('Produto', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('Qtd', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('Preço', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              ),
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('Total', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-              ),
-            ],
-          ),
-          ...items.map((item) => pw.TableRow(
-            children: [
-              pw.Padding(
-                padding: const pw.EdgeInsets.all(4),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    pw.Text(item.name),
-                    if (item.sku != null) pw.Text(item.sku!, style: const pw.TextStyle(fontSize: 8)),
-                    if (item.description != null) pw.Text(item.description!, style: const pw.TextStyle(fontSize: 8)),
-                  ],
+                child: pw.Text(
+                  'Produto',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                 ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
-                child: pw.Text(item.quantity.toString()),
+                child: pw.Text(
+                  'Qtd',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('${item.unitPrice.toStringAsFixed(0)} ${config.currency}'),
+                child: pw.Text(
+                  'Preço',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
               ),
               pw.Padding(
                 padding: const pw.EdgeInsets.all(4),
-                child: pw.Text('${item.total.toStringAsFixed(0)} ${config.currency}'),
+                child: pw.Text(
+                  'Total',
+                  style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                ),
               ),
             ],
-          )),
+          ),
+          ...items.map(
+            (item) => pw.TableRow(
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(4),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(item.name),
+                      if (item.sku != null)
+                        pw.Text(
+                          item.sku!,
+                          style: const pw.TextStyle(fontSize: 8),
+                        ),
+                      if (item.description != null)
+                        pw.Text(
+                          item.description!,
+                          style: const pw.TextStyle(fontSize: 8),
+                        ),
+                    ],
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(4),
+                  child: pw.Text(item.quantity.toString()),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    '${item.unitPrice.toStringAsFixed(0)} ${config.currency}',
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(4),
+                  child: pw.Text(
+                    '${item.total.toStringAsFixed(0)} ${config.currency}',
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     ],
@@ -374,9 +395,14 @@ pw.Widget _buildTotals(ReceiptData data, ReceiptConfig config) {
       pw.Row(
         mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
         children: [
-          pw.Text('TOTAL:', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-          pw.Text('${data.total.toStringAsFixed(0)} ${config.currency}', 
-                 style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+          pw.Text(
+            'TOTAL:',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.Text(
+            '${data.total.toStringAsFixed(0)} ${config.currency}',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
         ],
       ),
     ],
@@ -408,10 +434,7 @@ pw.Widget _buildPaymentInfo(ReceiptData data, ReceiptConfig config) {
       if (data.paymentMethod != null) ...[
         pw.Row(
           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-          children: [
-            pw.Text('Método:'),
-            pw.Text(data.paymentMethod!),
-          ],
+          children: [pw.Text('Método:'), pw.Text(data.paymentMethod!)],
         ),
       ],
     ],
@@ -423,7 +446,10 @@ pw.Widget _buildNotes(String notes, ReceiptConfig config) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
-      pw.Text('OBSERVAÇÕES', style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+      pw.Text(
+        'OBSERVAÇÕES',
+        style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+      ),
       pw.Text(notes),
     ],
   );

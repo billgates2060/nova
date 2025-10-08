@@ -3,6 +3,8 @@ import 'dart:io';
 import '../services/print_service.dart';
 import '../widgets/responsive_widgets.dart';
 import 'package:intl/intl.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:cross_file/cross_file.dart';
 
 class ReceiptsHistoryScreen extends StatefulWidget {
   const ReceiptsHistoryScreen({super.key});
@@ -52,7 +54,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
     if (_searchQuery.isEmpty) {
       return _receipts;
     }
-    
+
     return _receipts.where((file) {
       final fileName = file.path.split('/').last.toLowerCase();
       return fileName.contains(_searchQuery.toLowerCase());
@@ -62,16 +64,18 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
   String _getReceiptDisplayName(File file) {
     final fileName = file.path.split('/').last;
     final nameWithoutExtension = fileName.replaceAll('.pdf', '');
-    
+
     // Extrair informações do nome do arquivo
     final parts = nameWithoutExtension.split('_');
     if (parts.length >= 2) {
       final receiptNumber = parts[1];
       final timestamp = parts.length > 2 ? parts[2] : '';
-      
+
       if (timestamp.isNotEmpty) {
         try {
-          final date = DateTime.fromMillisecondsSinceEpoch(int.parse(timestamp));
+          final date = DateTime.fromMillisecondsSinceEpoch(
+            int.parse(timestamp),
+          );
           final formattedDate = DateFormat('dd/MM/yyyy HH:mm').format(date);
           return 'Recibo #$receiptNumber - $formattedDate';
         } catch (e) {
@@ -80,7 +84,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
       }
       return 'Recibo #$receiptNumber';
     }
-    
+
     return fileName;
   }
 
@@ -88,7 +92,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
     final fileName = file.path.split('/').last;
     final nameWithoutExtension = fileName.replaceAll('.pdf', '');
     final parts = nameWithoutExtension.split('_');
-    
+
     if (parts.length > 2) {
       final timestamp = parts[2];
       try {
@@ -98,7 +102,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
         return DateFormat('dd/MM/yyyy').format(file.lastModifiedSync());
       }
     }
-    
+
     return DateFormat('dd/MM/yyyy').format(file.lastModifiedSync());
   }
 
@@ -212,12 +216,12 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _filteredReceipts.isEmpty
-                    ? _buildEmptyState()
-                    : ResponsiveList(
-                        children: _filteredReceipts.map((file) {
-                          return _buildReceiptCard(file);
-                        }).toList(),
-                      ),
+                ? _buildEmptyState()
+                : ResponsiveList(
+                    children: _filteredReceipts.map((file) {
+                      return _buildReceiptCard(file);
+                    }).toList(),
+                  ),
           ),
         ],
       ),
@@ -229,28 +233,24 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.receipt_long_outlined,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(Icons.receipt_long_outlined, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             _searchQuery.isEmpty
                 ? 'Nenhum recibo salvo'
                 : 'Nenhum recibo encontrado',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              color: Colors.grey[600],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineSmall?.copyWith(color: Colors.grey[600]),
           ),
           const SizedBox(height: 8),
           Text(
             _searchQuery.isEmpty
                 ? 'Os recibos salvos aparecerão aqui'
                 : 'Tente uma busca diferente',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Colors.grey[500],
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: Colors.grey[500]),
           ),
         ],
       ),
@@ -291,18 +291,12 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                     const SizedBox(height: 4),
                     Text(
                       _getReceiptDate(file),
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       'Tamanho: ${_formatFileSize(file.lengthSync())}',
-                      style: TextStyle(
-                        color: Colors.grey[500],
-                        fontSize: 12,
-                      ),
+                      style: TextStyle(color: Colors.grey[500], fontSize: 12),
                     ),
                   ],
                 ),
@@ -351,9 +345,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                   onPressed: () => _shareReceipt(file),
                   icon: const Icon(Icons.share),
                   label: const Text('Compartilhar'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.blue,
-                  ),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.blue),
                 ),
               ),
               const SizedBox(width: 12),
@@ -362,9 +354,7 @@ class _ReceiptsHistoryScreenState extends State<ReceiptsHistoryScreen> {
                   onPressed: () => _deleteReceipt(file),
                   icon: const Icon(Icons.delete),
                   label: const Text('Excluir'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.red,
-                  ),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
                 ),
               ),
             ],
