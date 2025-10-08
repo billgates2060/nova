@@ -345,7 +345,7 @@ app.patch('/users/:id/unblock', auth, ensureActiveUser, requireAdmin, async (req
 
 // Optional: update user (role/storeId)
 app.patch('/users/:id', auth, ensureActiveUser, requireAdmin, async (req, res) => {
-  const { role, storeId, status, blockedUntil, storeName } = req.body;
+  const { role, storeId, status, blockedUntil, storeName, name } = req.body;
   const fields = [];
   const args = [];
   if (role) { fields.push('role = ?'); args.push(role); }
@@ -353,6 +353,7 @@ app.patch('/users/:id', auth, ensureActiveUser, requireAdmin, async (req, res) =
   if (status) { fields.push('status = ?'); args.push(status); }
   if (typeof blockedUntil !== 'undefined') { fields.push('blocked_until = ?'); args.push(blockedUntil || null); }
   if (typeof storeName !== 'undefined') { fields.push('store_name = ?'); args.push(storeName || null); }
+  if (typeof name !== 'undefined') { fields.push('name = ?'); args.push(name || null); }
   if (!fields.length) return res.status(400).json({ error: 'no_fields' });
   args.push(req.params.id);
   const db = await dbPromise;
