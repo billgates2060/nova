@@ -7,6 +7,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
@@ -105,6 +106,17 @@ async function createDb() {
       store_id TEXT NOT NULL,
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
+
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id INTEGER NOT NULL,
+      token TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      revoked_at TEXT,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
   `);
 
   const safeAlter = async (sql) => { try { await db.exec(sql); } catch (_) {} };
@@ -135,16 +147,42 @@ async function createDb() {
 
 let dbPromise = createDb();
 
+// Utilities
+function slugify(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)+/g, '')
+    .slice(0, 32);
+}
+
+function generateStoreIdentifiers(preferredName) {
+  const baseName = preferredName && String(preferredName).trim().length > 0
+    ? preferredName.trim()
+    : 'Loja';
+  const slug = slugify(baseName) || 'loja';
+  const rand = Math.random().toString(36).slice(2, 8);
+  const storeId = `store_${slug}_${rand}`;
+  const storeName = baseName;
+  return { storeId, storeName };
+}
+
 // Health
 app.get('/health', (_req, res) => res.json({ ok: true }));
 
 // Auth
+function randomTokenString(size = 48) {
+  return crypto.randomBytes(size).toString('hex');
+}
+
 app.post('/auth/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ error: 'email and password required' });
     const db = await dbPromise;
-    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name FROM users WHERE email = ?', [email]);
+    const user = await db.get('SELECT id, email, password, role, status, blocked_until, store_id, store_name, name FROM users WHERE email = ?', [email]);
     if (!user) return res.status(401).json({ error: 'invalid_credentials' });
     if (user.status !== 'active') return res.status(403).json({ error: 'account_blocked' });
     if (user.blocked_until) {
@@ -156,9 +194,48 @@ app.post('/auth/login', async (req, res) => {
     }
     const ok = await bcrypt.compare(password, user.password);
     if (!ok) return res.status(401).json({ error: 'invalid_credentials' });
-    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, storeId: user.store_id }, JWT_SECRET, { expiresIn: '7d' });
-    res.json({ token, user: { id: user.id, email: user.email, role: user.role, storeId: user.store_id, storeName: user.store_name, name: user.name } });
+    const token = jwt.sign({ id: user.id, email: user.email, role: user.role, storeId: user.store_id }, JWT_SECRET, { expiresIn: '1h' });
+    // issue refresh token (30 days)
+    const refreshToken = randomTokenString(32);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await db.run('INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)', [user.id, refreshToken, expiresAt]);
+    res.json({ token, refreshToken, user: { id: user.id, email: user.email, role: user.role, storeId: user.store_id, storeName: user.store_name, name: user.name } });
   } catch (e) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Refresh access token using refresh token (rotation)
+app.post('/auth/refresh', async (req, res) => {
+  try {
+    const { refreshToken } = req.body || {};
+    if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' });
+    const db = await dbPromise;
+    const row = await db.get('SELECT rt.id, rt.user_id as userId, rt.token, rt.expires_at as expiresAt, rt.revoked_at as revokedAt, u.email, u.role, u.store_id as storeId FROM refresh_tokens rt JOIN users u ON u.id = rt.user_id WHERE rt.token = ?', [refreshToken]);
+    if (!row) return res.status(401).json({ error: 'invalid_refresh' });
+    if (row.revokedAt) return res.status(401).json({ error: 'revoked_refresh' });
+    if (new Date(row.expiresAt).getTime() < Date.now()) return res.status(401).json({ error: 'expired_refresh' });
+    // rotate
+    await db.run('UPDATE refresh_tokens SET revoked_at = datetime("now") WHERE id = ?', [row.id]);
+    const newRefresh = randomTokenString(32);
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    await db.run('INSERT INTO refresh_tokens (user_id, token, expires_at) VALUES (?, ?, ?)', [row.userId, newRefresh, expiresAt]);
+    const token = jwt.sign({ id: row.userId, email: row.email, role: row.role, storeId: row.storeId }, JWT_SECRET, { expiresIn: '1h' });
+    res.json({ token, refreshToken: newRefresh });
+  } catch (e) {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+// Logout: revoke refresh token
+app.post('/auth/logout', auth, async (req, res) => {
+  try {
+    const { refreshToken } = req.body || {};
+    if (!refreshToken) return res.status(400).json({ error: 'refreshToken required' });
+    const db = await dbPromise;
+    await db.run('UPDATE refresh_tokens SET revoked_at = datetime("now") WHERE token = ? AND user_id = ?', [refreshToken, req.user.id]);
+    res.json({ ok: true });
+  } catch {
     res.status(500).json({ error: 'internal_error' });
   }
 });
@@ -218,9 +295,19 @@ app.get('/users', auth, ensureActiveUser, requireAdmin, async (_req, res) => {
 app.post('/users', auth, ensureActiveUser, requireAdmin, async (req, res) => {
   try {
     const { name, email, password, role = 'user', store_id, storeId, store_name, storeName, blockedUntil } = req.body;
-    const normalizedStoreId = store_id || storeId;
-    const normalizedStoreName = store_name || storeName;
-    if (!name || !email || !password || !normalizedStoreId || !normalizedStoreName) return res.status(400).json({ error: 'name, email, password, storeId, storeName required' });
+    let normalizedStoreId = store_id || storeId;
+    let normalizedStoreName = store_name || storeName;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ error: 'name, email and password are required' });
+    }
+
+    // Auto-generate store when missing
+    if (!normalizedStoreId || !normalizedStoreName) {
+      const generated = generateStoreIdentifiers(normalizedStoreName || name);
+      normalizedStoreId = generated.storeId;
+      normalizedStoreName = generated.storeName;
+    }
     if (!['user', 'admin'].includes(role)) return res.status(400).json({ error: 'invalid_role' });
     const db = await dbPromise;
     const hash = await bcrypt.hash(password, 10);
@@ -427,6 +514,65 @@ app.get('/summary/daily', auth, ensureActiveUser, async (req, res) => {
   const totalSales = rows.reduce((sum, r) => sum + (r.total_price ?? 0), 0);
   const totalProductsSold = rows.reduce((sum, r) => sum + (r.quantity ?? 0), 0);
   res.json({ date, totalSales, totalProductsSold, sales: rows });
+});
+
+// Reports: revenue by date range (inclusive) per store or all (admin)
+app.get('/reports/revenue', auth, ensureActiveUser, async (req, res) => {
+  const start = String(req.query.start || '');
+  const end = String(req.query.end || '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(start) || !/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+    return res.status(400).json({ error: 'start and end required (yyyy-mm-dd)' });
+  }
+  const db = await dbPromise;
+  const storeId = req.user.role === 'admin' ? (req.query.storeId || req.user.storeId) : req.user.storeId;
+  const params = [storeId, start, end];
+  const rows = await db.all(
+    `SELECT substr(sale_date, 1, 10) as day, COUNT(*) as salesCount, COALESCE(SUM(total_price),0) as revenue
+     FROM sales
+     WHERE store_id = ? AND substr(sale_date, 1, 10) BETWEEN ? AND ?
+     GROUP BY day
+     ORDER BY day ASC`,
+    params
+  );
+  const totalRevenue = rows.reduce((s, r) => s + (r.revenue || 0), 0);
+  const totalSales = rows.reduce((s, r) => s + (r.salesCount || 0), 0);
+  res.json({ start, end, storeId, totalRevenue, totalSales, byDay: rows });
+});
+
+// Password reset: request token and confirm
+app.post('/auth/request_reset', async (req, res) => {
+  try {
+    const { email } = req.body || {};
+    if (!email) return res.status(400).json({ error: 'email required' });
+    const db = await dbPromise;
+    const user = await db.get('SELECT id, email FROM users WHERE email = ?', [email]);
+    // Always respond success to avoid user enumeration
+    if (!user) return res.json({ ok: true });
+    const resetToken = jwt.sign({ purpose: 'password_reset', uid: user.id }, JWT_SECRET, { expiresIn: '15m' });
+    // In production you'd email this token; here we return it for manual flow
+    res.json({ ok: true, resetToken });
+  } catch {
+    res.status(500).json({ error: 'internal_error' });
+  }
+});
+
+app.post('/auth/reset', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body || {};
+    if (!token || !newPassword || String(newPassword).length < 6) {
+      return res.status(400).json({ error: 'token and newPassword(min 6) required' });
+    }
+    const payload = jwt.verify(token, JWT_SECRET);
+    if (payload?.purpose !== 'password_reset' || !payload?.uid) {
+      return res.status(400).json({ error: 'invalid_token' });
+    }
+    const db = await dbPromise;
+    const hash = await bcrypt.hash(String(newPassword), 10);
+    await db.run('UPDATE users SET password = ? WHERE id = ?', [hash, payload.uid]);
+    res.json({ ok: true });
+  } catch {
+    res.status(400).json({ error: 'invalid_or_expired_token' });
+  }
 });
 
 // Clients (per store)
