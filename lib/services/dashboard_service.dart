@@ -45,7 +45,16 @@ class DashboardService {
 
       // Online path
       final productsResp = await ApiClient.get('/products', auth: true);
-      final products = (jsonDecode(productsResp.body) as List).cast<dynamic>();
+      final pDecoded = jsonDecode(productsResp.body);
+      final List<dynamic> products = pDecoded is List
+          ? pDecoded
+          : (pDecoded is Map && pDecoded['items'] is List)
+          ? pDecoded['items'] as List
+          : (pDecoded is Map && pDecoded['data'] is List)
+          ? pDecoded['data'] as List
+          : (pDecoded is Map && pDecoded['products'] is List)
+          ? pDecoded['products'] as List
+          : <dynamic>[];
 
       final summaryResp = await ApiClient.get(
         '/summary/daily?date=$today',
@@ -54,8 +63,17 @@ class DashboardService {
       final summary = jsonDecode(summaryResp.body) as Map<String, dynamic>;
 
       final salesResp = await ApiClient.get('/sales', auth: true);
-      final allSales = (jsonDecode(salesResp.body) as List)
-          .cast<Map<String, dynamic>>();
+      final sDecoded = jsonDecode(salesResp.body);
+      final List<dynamic> rawSales = sDecoded is List
+          ? sDecoded
+          : (sDecoded is Map && sDecoded['items'] is List)
+          ? sDecoded['items'] as List
+          : (sDecoded is Map && sDecoded['data'] is List)
+          ? sDecoded['data'] as List
+          : (sDecoded is Map && sDecoded['sales'] is List)
+          ? sDecoded['sales'] as List
+          : <dynamic>[];
+      final allSales = rawSales.cast<Map<String, dynamic>>();
       final recent = allSales.take(3).toList();
 
       // Low stock products
@@ -64,7 +82,19 @@ class DashboardService {
         auth: true,
       );
       final lowStock = lowStockResp.statusCode == 200
-          ? (jsonDecode(lowStockResp.body) as List).cast<Map<String, dynamic>>()
+          ? (() {
+              final lDecoded = jsonDecode(lowStockResp.body);
+              final List<dynamic> raw = lDecoded is List
+                  ? lDecoded
+                  : (lDecoded is Map && lDecoded['items'] is List)
+                  ? lDecoded['items'] as List
+                  : (lDecoded is Map && lDecoded['data'] is List)
+                  ? lDecoded['data'] as List
+                  : (lDecoded is Map && lDecoded['lowStock'] is List)
+                  ? lDecoded['lowStock'] as List
+                  : <dynamic>[];
+              return raw.cast<Map<String, dynamic>>();
+            })()
           : <Map<String, dynamic>>[];
 
       final totals = {

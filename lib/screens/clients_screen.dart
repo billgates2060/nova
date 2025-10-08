@@ -29,9 +29,18 @@ class _ClientsScreenState extends State<ClientsScreen> {
         : '/clients?q=${Uri.encodeQueryComponent(_query)}';
     final resp = await ApiClient.get(path, auth: true);
     if (resp.statusCode == 200) {
-      final list = (jsonDecode(resp.body) as List).cast<Map<String, dynamic>>();
+      final decoded = jsonDecode(resp.body);
+      final List<dynamic> rawList = decoded is List
+          ? decoded
+          : (decoded is Map && decoded['items'] is List)
+          ? decoded['items'] as List
+          : (decoded is Map && decoded['data'] is List)
+          ? decoded['data'] as List
+          : (decoded is Map && decoded['clients'] is List)
+          ? decoded['clients'] as List
+          : <dynamic>[];
       setState(() {
-        _clients = list;
+        _clients = rawList.cast<Map<String, dynamic>>();
         _loading = false;
       });
     } else {

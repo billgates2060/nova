@@ -29,7 +29,17 @@ class _DailySummaryScreenState extends State<DailySummaryScreen> {
     final resp = await ApiClient.get('/sales', auth: true);
     if (!mounted) return;
     if (resp.statusCode == 200) {
-      final list = (jsonDecode(resp.body) as List)
+      final decoded = jsonDecode(resp.body);
+      final List<dynamic> rawList = decoded is List
+          ? decoded
+          : (decoded is Map && decoded['items'] is List)
+          ? decoded['items'] as List
+          : (decoded is Map && decoded['data'] is List)
+          ? decoded['data'] as List
+          : (decoded is Map && decoded['sales'] is List)
+          ? decoded['sales'] as List
+          : <dynamic>[];
+      final list = rawList
           .map(
             (m) => Sale(
               id: m['id'],

@@ -2,11 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/sale.dart';
 import '../services/api_client.dart';
 import 'package:nova/l10n/app_localizations.dart';
-import 'package:printing/printing.dart';
 import '../services/reports/receipt_pdf.dart';
 import '../services/print_service.dart';
 import 'dart:convert';
-import '../services/currency.dart';
 import 'sale_form_screen.dart';
 import '../services/sync_service.dart';
 import 'receipts_history_screen.dart';
@@ -39,7 +37,17 @@ class _SalesScreenState extends State<SalesScreen> {
     final resp = await ApiClient.get('/sales', auth: true);
     if (!mounted) return;
     if (resp.statusCode == 200) {
-      final list = (jsonDecode(resp.body) as List)
+      final decoded = jsonDecode(resp.body);
+      final List<dynamic> rawList = decoded is List
+          ? decoded
+          : (decoded is Map && decoded['items'] is List)
+          ? decoded['items'] as List
+          : (decoded is Map && decoded['data'] is List)
+          ? decoded['data'] as List
+          : (decoded is Map && decoded['sales'] is List)
+          ? decoded['sales'] as List
+          : <dynamic>[];
+      final list = rawList
           .map(
             (m) => Sale(
               id: m['id'],
@@ -238,7 +246,10 @@ class _SalesScreenState extends State<SalesScreen> {
                                     value: 'preview',
                                     child: Row(
                                       children: [
-                                        Icon(Icons.visibility, color: Colors.blue),
+                                        Icon(
+                                          Icons.visibility,
+                                          color: Colors.blue,
+                                        ),
                                         SizedBox(width: 8),
                                         Text('Visualizar'),
                                       ],
@@ -336,7 +347,7 @@ class _SalesScreenState extends State<SalesScreen> {
         if (result.clientId != null) 'client_id': result.clientId,
       }, auth: true);
       await _loadSales();
-      
+
       // Gerar e compartilhar recibo automaticamente
       await _generateAndShareReceipt(result);
     }
@@ -358,15 +369,12 @@ class _SalesScreenState extends State<SalesScreen> {
         ],
         total: sale.totalPrice,
         paid: sale.totalPrice,
-        client: sale.clientName != null 
+        client: sale.clientName != null
             ? ReceiptClient(name: sale.clientName)
             : null,
       );
 
-      await PrintService.shareReceipt(
-        receiptData: receiptData,
-        config: config,
-      );
+      await PrintService.shareReceipt(receiptData: receiptData, config: config);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -404,7 +412,7 @@ class _SalesScreenState extends State<SalesScreen> {
         ],
         total: sale.totalPrice,
         paid: sale.totalPrice,
-        client: sale.clientName != null 
+        client: sale.clientName != null
             ? ReceiptClient(name: sale.clientName)
             : null,
       );

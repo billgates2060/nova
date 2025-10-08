@@ -432,8 +432,16 @@ class _SaleFormScreenState extends State<SaleFormScreen> {
   Future<void> _pickClient() async {
     final resp = await ApiClient.get('/clients', auth: true);
     if (resp.statusCode != 200) return;
-    final List<dynamic> clients = (jsonDecode(resp.body) as List)
-        .cast<dynamic>();
+    final decoded = jsonDecode(resp.body);
+    final List<dynamic> clients = decoded is List
+        ? decoded
+        : (decoded is Map && decoded['items'] is List)
+        ? decoded['items'] as List
+        : (decoded is Map && decoded['data'] is List)
+        ? decoded['data'] as List
+        : (decoded is Map && decoded['clients'] is List)
+        ? decoded['clients'] as List
+        : <dynamic>[];
     if (!mounted) return;
     await showModalBottomSheet(
       context: context,
